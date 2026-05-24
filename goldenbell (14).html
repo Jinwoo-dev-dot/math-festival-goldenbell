@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>도전 골든벨 🔔</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --gold:#FFD700;--gold-light:#FFE57F;--gold-dark:#B8860B;--gold-deep:#8B6914;
+  --red:#E74C3C;--red-deep:#922B21;--green:#27AE60;--green-light:#2ECC71;
+  --blue:#4FC3F7;--purple:#A29BFE;
+  --bg:#08070C;--bg2:#0F0D17;--bg3:#1A1726;--surface:#211D33;--surface2:#2A2540;
+  --border:#3A3450;--border-light:#4A4360;
+  --text:#F5F2E8;--text2:#A8A2B8;--text3:#6E687E;
+  --shadow-gold:0 0 40px rgba(255,215,0,.15);
+  --shadow-card:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.04);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100vh;}
+body{
+  font-family:'Nanum Gothic',sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%,rgba(255,215,0,.12),transparent 50%),
+    radial-gradient(ellipse 60% 40% at 50% 100%,rgba(184,134,11,.08),transparent 60%),
+    linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+  background-attachment:fixed;
+  min-height:100vh;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(circle at 20% 30%,rgba(255,215,0,.04),transparent 25%),
+    radial-gradient(circle at 80% 70%,rgba(162,155,254,.04),transparent 25%);
+}
+h1,h2,h3{font-family:'Black Han Sans',sans-serif;letter-spacing:.01em;}
+.page{display:none;min-height:100vh;padding:20px 16px;align-items:center;justify-content:center;flex-direction:column;position:relative;z-index:1;}
+.page.active{display:flex;}
+.card{
+  background:linear-gradient(180deg,var(--surface) 0%,var(--bg3) 100%);
+  border:1px solid var(--border);
+  border-radius:18px;padding:32px 28px;width:100%;max-width:460px;
+  box-shadow:var(--shadow-card);
+  position:relative;
+}
+.card::before{
+  content:'';position:absolute;inset:0;border-radius:18px;padding:1px;
+  background:linear-gradient(135deg,rgba(255,215,0,.3),transparent 40%,transparent 60%,rgba(255,215,0,.15));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  pointer-events:none;
+}
+.gold-title{
+  color:var(--gold);text-align:center;font-size:2.2rem;margin-bottom:8px;
+  background:linear-gradient(180deg,#FFF4B0 0%,var(--gold) 50%,var(--gold-dark) 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 24px rgba(255,215,0,.4));
+  letter-spacing:.02em;
+}
+.subtitle{text-align:center;color:var(--text2);font-size:.9rem;margin-bottom:22px;}
+.tab-row{display:flex;border-bottom:2px solid var(--border);margin-bottom:22px;}
+.tab-btn{flex:1;padding:12px 8px;background:none;border:none;color:var(--text2);font-family:'Nanum Gothic',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .25s;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);text-shadow:0 0 12px rgba(255,215,0,.4);}
+.ig{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;}
+.ig label{font-size:.78rem;color:var(--text2);font-weight:700;letter-spacing:.02em;}
+.ig input,.ig select{background:var(--bg3);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'Nanum Gothic',sans-serif;font-size:.95rem;padding:11px 14px;outline:none;transition:all .2s;width:100%;}
+.ig input:focus,.ig select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,215,0,.12);}
+.ig input::placeholder{color:var(--text3);}
+.btn{width:100%;padding:13px;border:none;border-radius:10px;font-family:'Black Han Sans',sans-serif;font-size:1.02rem;cursor:pointer;transition:all .2s;margin-top:4px;letter-spacing:.02em;position:relative;overflow:hidden;}
+.btn:active{transform:translateY(1px);}
+.btn-gold{background:linear-gradient(135deg,#FFE57F 0%,var(--gold) 40%,var(--gold-dark) 100%);color:#1a1300;box-shadow:0 4px 18px rgba(255,215,0,.25),inset 0 1px 0 rgba(255,255,255,.4);}
+.btn-gold:hover{filter:brightness(1.08);box-shadow:0 6px 24px rgba(255,215,0,.35),inset 0 1px 0 rgba(255,255,255,.4);transform:translateY(-1px);}
+.btn-outline{background:transparent;border:2px solid var(--gold);color:var(--gold);}
+.btn-outline:hover{background:rgba(255,215,0,.1);box-shadow:0 0 16px rgba(255,215,0,.15);}
+.btn-red{background:linear-gradient(135deg,#FF6B5B,var(--red),var(--red-deep));color:#fff;box-shadow:0 3px 14px rgba(231,76,60,.3);}
+.btn-red:hover{filter:brightness(1.08);}
+.btn-green{background:linear-gradient(135deg,var(--green-light),var(--green));color:#fff;box-shadow:0 3px 14px rgba(39,174,96,.3);}
+.btn-green:hover{filter:brightness(1.08);}
+.btn-sm{padding:8px 15px;font-size:.83rem;width:auto;}
+.err{color:#FF7B6B;font-size:.82rem;text-align:center;margin-top:6px;min-height:18px;}
+.ok{color:var(--green-light);font-size:.82rem;text-align:center;margin-top:6px;}
+.notice{background:linear-gradient(135deg,rgba(255,215,0,.08),rgba(255,215,0,.03));border:1px solid rgba(255,215,0,.28);border-radius:12px;padding:14px 18px;margin-bottom:14px;text-align:center;}
+.badge{display:inline-block;padding:3px 10px;border-radius:100px;font-size:.72rem;font-weight:700;letter-spacing:.02em;}
+.badge-gold{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:#1a1300;}
+.badge-red{background:linear-gradient(135deg,#FF6B5B,var(--red));color:#fff;}
+.badge-green{background:linear-gradient(135deg,var(--green-light),var(--green));color:#fff;}
+.badge-gray{background:var(--border);color:var(--text2);}
+.spinner{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:20px auto;box-shadow:0 0 20px rgba(255,215,0,.2);}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bell{font-size:2.8rem;text-align:center;display:block;animation:bellRing 2s ease-in-out infinite;filter:drop-shadow(0 0 16px rgba(255,215,0,.45));}
+@keyframes bellRing{0%,100%{transform:rotate(0)}10%,30%{transform:rotate(-14deg)}20%,40%{transform:rotate(14deg)}50%{transform:rotate(0)}}
+.pulse{animation:pulse 1.5s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.timer-big{font-family:'Black Han Sans',sans-serif;font-size:4rem;color:var(--gold);text-align:center;text-shadow:0 0 48px rgba(255,215,0,.65),0 0 12px rgba(255,215,0,.4);}
+.ox-row{display:flex;gap:12px;margin-bottom:16px;}
+.ox-btn{flex:1;padding:26px;border:3px solid var(--border);border-radius:14px;background:var(--bg3);font-size:2.8rem;cursor:pointer;transition:all .2s;color:var(--text);font-family:inherit;}
+.ox-btn:hover{border-color:var(--border-light);}
+.ox-btn.sel{border-color:var(--gold);background:linear-gradient(135deg,rgba(255,215,0,.15),rgba(255,215,0,.05));transform:scale(1.05);box-shadow:0 0 24px rgba(255,215,0,.25);}
+.agrid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:14px;}
+.acell{aspect-ratio:1;border:2px solid var(--border);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:var(--text2);background:var(--bg3);font-weight:700;}
+.acell.answered{border-color:var(--gold);color:var(--gold);background:rgba(255,215,0,.08);}
+.acell.current{border-color:var(--blue);color:var(--blue);background:rgba(79,195,247,.1);}
+/* 관리자 */
+.admin-wrap{width:100%;max-width:1180px;margin:0 auto;padding:20px 16px;position:relative;z-index:1;}
+.stat-box{flex:1;min-width:80px;background:linear-gradient(180deg,var(--bg3),var(--bg2));border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;transition:all .2s;}
+.stat-box:hover{border-color:var(--border-light);}
+.stat-box .num{font-family:'Black Han Sans',sans-serif;font-size:1.85rem;background:linear-gradient(180deg,#FFE57F,var(--gold-dark));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.stat-box .lbl{font-size:.72rem;color:var(--text2);margin-top:2px;}
+.panel{background:linear-gradient(180deg,var(--surface) 0%,var(--bg3) 100%);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+table{width:100%;border-collapse:collapse;font-size:.84rem;}
+th,td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--border);}
+th{color:var(--text2);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;}
+tr:hover td{background:rgba(255,215,0,.02);}
+tr:last-child td{border-bottom:none;}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:16px 0;}
+select{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:9px;font-family:'Nanum Gothic',sans-serif;font-size:.88rem;width:100%;}
+input[type=text],input[type=password],input[type=number]{background:var(--bg3);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'Nanum Gothic',sans-serif;font-size:.9rem;padding:10px 13px;outline:none;width:100%;transition:all .2s;}
+input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,215,0,.12);}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:var(--gold-deep);}
+@media(max-width:600px){.agrid{grid-template-columns:repeat(5,1fr)}.card{padding:22px 18px}.gold-title{font-size:1.7rem}}
+/* 좌석 배치 */
+.seat-wrap{overflow-x:auto;padding:8px 0;}
+.seat-grid{display:grid;grid-template-columns:repeat(12,minmax(28px,1fr));gap:3px;min-width:380px;}
+.seat{aspect-ratio:1;border:1.5px solid var(--border);border-radius:5px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:.62rem;color:var(--text2);cursor:pointer;transition:all .15s;font-weight:700;user-select:none;}
+.seat:hover:not(.taken):not(.disabled){border-color:var(--gold);background:rgba(255,215,0,.1);transform:scale(1.08);}
+.seat.taken{background:#3A2A2A;border-color:#5A3A3A;color:#7A5A5A;cursor:not-allowed;}
+.seat.mine{background:rgba(255,215,0,.25);border-color:var(--gold);color:var(--gold);}
+.seat.sel{background:linear-gradient(135deg,#FFE57F,var(--gold));border-color:var(--gold);color:#1a1300;transform:scale(1.1);box-shadow:0 0 12px rgba(255,215,0,.5);}
+.seat.correct{background:linear-gradient(135deg,rgba(39,174,96,.5),rgba(39,174,96,.3));border-color:var(--green);color:#fff;box-shadow:0 0 8px rgba(39,174,96,.3);}
+.seat.wrong{background:linear-gradient(135deg,rgba(231,76,60,.5),rgba(231,76,60,.3));border-color:var(--red);color:#fff;box-shadow:0 0 8px rgba(231,76,60,.3);}
+.seat.eliminated{background:rgba(231,76,60,.45);border-color:var(--red);color:#fff;opacity:.75;}
+.seat.alive{background:linear-gradient(135deg,rgba(39,174,96,.35),rgba(39,174,96,.2));border-color:var(--green);color:#fff;}
+.seat.empty{background:transparent;border:1px dashed var(--border);cursor:default;}
+.seat-stage{grid-column:1/-1;background:linear-gradient(180deg,rgba(255,215,0,.2),rgba(255,215,0,.02));border:1px solid rgba(255,215,0,.35);border-radius:10px;padding:8px;text-align:center;font-size:.82rem;color:var(--gold);font-weight:700;margin-bottom:6px;letter-spacing:.05em;text-shadow:0 0 12px rgba(255,215,0,.3);}
+.seat-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.74rem;color:var(--text2);margin-top:10px;}
+.seat-legend span{display:inline-flex;align-items:center;gap:5px}
+.seat-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;}
+</style>
+</head>
+<body>
+
+<!-- ===== 이탈 경고 모달 (참가자 전용) ===== -->
+<div id="leave-warn" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)">
+  <div style="background:linear-gradient(180deg,var(--surface),var(--bg3));border:2px solid var(--red);border-radius:18px;padding:30px 26px;max-width:440px;width:100%;text-align:center;box-shadow:0 0 50px rgba(231,76,60,.4)">
+    <div style="font-size:3.5rem;margin-bottom:10px">⚠️</div>
+    <h2 id="leave-warn-title" style="color:var(--red);font-size:1.7rem;margin-bottom:8px">화면 이탈 감지!</h2>
+    <p id="leave-warn-desc" style="color:var(--text);font-size:.95rem;margin-bottom:18px">골든벨 진행 중에는 <strong style="color:var(--gold)">이 화면을 벗어나면 안 됩니다</strong></p>
+    <div style="padding:12px;background:rgba(231,76,60,.1);border:1px solid var(--red);border-radius:10px;margin-bottom:18px">
+      <p style="font-size:.78rem;color:var(--text2)">이탈 횟수</p>
+      <p style="font-family:'Black Han Sans',sans-serif;font-size:2.4rem;color:var(--red)"><span id="leave-count">0</span><span style="font-size:1rem;color:var(--text2)"> / 2 회</span></p>
+    </div>
+    <button class="btn btn-gold" id="btn-leave-ack">⬅ 게임으로 돌아가기</button>
+  </div>
+</div>
+
+<!-- ===== 로그인 ===== -->
+<div id="pg-login" class="page active">
+<div class="card">
+  <span class="bell">🔔</span>
+  <p style="text-align:center;font-family:'Black Han Sans',sans-serif;font-size:1rem;color:var(--gold-dark);letter-spacing:0.08em;margin-bottom:4px">✨ MATH FESTIVAL 2026 ✨</p>
+  <h1 class="gold-title">도전 골든벨</h1>
+  <p class="subtitle">로그인</p>
+  <div class="tab-row">
+    <button class="tab-btn active" id="tab-user">🎓 학생</button>
+    <button class="tab-btn" id="tab-admin">🔐 관리자</button>
+  </div>
+
+  <!-- 학생 로그인 -->
+  <div id="login-user-section">
+    <div class="ig"><label>아이디</label><input id="u-login-id" placeholder="아이디 입력"></div>
+    <div class="ig"><label>비밀번호</label><input id="u-login-pw" type="password" placeholder="비밀번호 입력"></div>
+    <p id="u-login-err" class="err"></p>
+    <button class="btn btn-gold" id="btn-u-login">로그인</button>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-outline" id="btn-go-register" style="font-size:.86rem;padding:10px">회원가입</button>
+      <button class="btn btn-outline" id="btn-go-settings" style="font-size:.86rem;padding:10px">설정 (비번찾기)</button>
+    </div>
+  </div>
+
+  <!-- 관리자 로그인/가입 -->
+  <div id="login-admin-section" style="display:none">
+    <div class="tab-row" style="margin-bottom:16px">
+      <button class="tab-btn active" id="atab-login">로그인</button>
+      <button class="tab-btn" id="atab-register">계정 생성</button>
+    </div>
+    <!-- 관리자 로그인 -->
+    <div id="admin-login-form">
+      <div class="notice" style="margin-bottom:12px"><span style="color:var(--gold);font-weight:700">🔐 관리자 전용</span><br><span style="font-size:.78rem;color:var(--text2)">담당 선생님만 이용 가능합니다</span></div>
+      <div class="ig"><label>관리자 아이디</label><input id="a-login-id" placeholder="관리자 아이디"></div>
+      <div class="ig"><label>비밀번호</label><input id="a-login-pw" type="password" placeholder="비밀번호"></div>
+      <p id="a-login-err" class="err"></p>
+      <button class="btn btn-gold" id="btn-a-login">관리자 로그인</button>
+    </div>
+    <!-- 관리자 계정 생성 (시드키 필요) -->
+    <div id="admin-reg-form" style="display:none">
+      <div class="notice" style="margin-bottom:12px"><span style="color:var(--gold);font-weight:700">🔑 관리자 계정 생성</span><br><span style="font-size:.78rem;color:var(--text2)">총관리자 승인키가 필요합니다</span></div>
+      <div class="ig"><label>승인키 (총관리자에게 받으세요)</label><input id="a-reg-key" type="password" placeholder="승인키 입력"></div>
+      <div class="ig"><label>아이디</label><input id="a-reg-id" placeholder="관리자 아이디 (3자 이상)"></div>
+      <div class="ig"><label>비밀번호</label><input id="a-reg-pw" type="password" placeholder="4자 이상"></div>
+      <div class="ig"><label>비밀번호 확인</label><input id="a-reg-pw2" type="password" placeholder="재입력"></div>
+      <div class="ig"><label>이름 (선생님 성함)</label><input id="a-reg-name" placeholder="홍길동 선생님"></div>
+      <div class="ig"><label>역할</label>
+        <select id="a-reg-role">
+          <option value="host">진행자 (게임 진행·제어)</option>
+          <option value="setter">문제출제자 (문제 입력만)</option>
+          <option value="viewer">열람자 (열람만)</option>
+        </select>
+      </div>
+      <p id="a-reg-err" class="err"></p>
+      <p id="a-reg-ok" class="ok"></p>
+      <button class="btn btn-gold" id="btn-a-register">계정 생성</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== 학생 회원가입 ===== -->
+<div id="pg-register" class="page">
+<div class="card" style="max-width:540px">
+  <h1 class="gold-title" style="font-size:1.7rem">🎓 학생 회원가입</h1>
+  <p class="subtitle">골든벨 참가를 위해 정보를 입력하세요</p>
+  <div class="ig"><label>아이디 (3자 이상, 영문+숫자)</label><input id="reg-id" placeholder="예: hong01" maxlength="20" autocapitalize="none"></div>
+  <div class="ig"><label>비밀번호 (4자 이상)</label><input id="reg-pw" type="password" placeholder="비밀번호"></div>
+  <div class="ig"><label>비밀번호 확인</label><input id="reg-pw2" type="password" placeholder="재입력"></div>
+  <div class="ig"><label>이름 (실명)</label><input id="reg-name" placeholder="홍길동"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+    <div class="ig" style="margin-bottom:0"><label>학년</label>
+      <select id="reg-grade"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
+    </div>
+    <div class="ig" style="margin-bottom:0"><label>반</label>
+      <select id="reg-class"><option value="1">1반</option><option value="2">2반</option><option value="3">3반</option><option value="4">4반</option><option value="5">5반</option></select>
+    </div>
+    <div class="ig" style="margin-bottom:0"><label id="reg-num-label">번호 (1~20)</label>
+      <input id="reg-number" type="number" min="1" max="20" placeholder="번호" inputmode="numeric">
+    </div>
+  </div>
+  <div style="padding:9px 13px;background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.25);border-radius:8px;margin-bottom:12px;font-size:.82rem">
+    생성될 학번: <strong id="preview-sid" style="color:var(--gold)">—</strong>
+    <span style="color:var(--text2);font-size:.74rem;margin-left:6px">(비번 분실 복구용)</span>
+  </div>
+  <div style="margin-bottom:14px">
+    <label style="font-size:.78rem;color:var(--text2);font-weight:700;display:block;margin-bottom:6px">참여 방식 선택</label>
+    <div style="display:flex;gap:10px">
+      <label class="join-opt sel" data-join="participant" style="flex:1;padding:14px 10px;border:2px solid var(--gold);border-radius:10px;background:rgba(255,215,0,.08);cursor:pointer;text-align:center;transition:all .2s">
+        <div style="font-size:1.4rem">🏆</div>
+        <div style="font-weight:700;color:var(--gold);font-size:.92rem;margin-top:3px">골든벨 참여자</div>
+        <div style="font-size:.7rem;color:var(--text2);margin-top:2px">직접 답안 제출</div>
+      </label>
+      <label class="join-opt" data-join="spectator" style="flex:1;padding:14px 10px;border:2px solid var(--border);border-radius:10px;background:var(--bg3);cursor:pointer;text-align:center;transition:all .2s">
+        <div style="font-size:1.4rem">👀</div>
+        <div style="font-weight:700;color:var(--text);font-size:.92rem;margin-top:3px">관람자</div>
+        <div style="font-size:.7rem;color:var(--text2);margin-top:2px">힌트 전달</div>
+      </label>
+    </div>
+    <input type="hidden" id="reg-join-type" value="participant">
+  </div>
+  <div style="margin-bottom:14px">
+    <label style="font-size:.78rem;color:var(--text2);font-weight:700;display:block;margin-bottom:6px">자리 선택 (가로 12 × 세로 20)</label>
+    <p style="font-size:.72rem;color:var(--text2);margin-bottom:6px">선택: <strong id="reg-seat-label" style="color:var(--gold)">미선택</strong></p>
+    <div class="seat-wrap"><div id="reg-seat-grid" class="seat-grid"></div></div>
+    <div class="seat-legend">
+      <span><i style="background:var(--bg3);border:1.5px solid var(--border)"></i>빈 자리</span>
+      <span><i style="background:var(--gold)"></i>내 선택</span>
+      <span><i style="background:#3A2A2A;border:1.5px solid #5A3A3A"></i>이미 사용</span>
+    </div>
+    <input type="hidden" id="reg-seat" value="">
+  </div>
+  <p id="reg-err" class="err"></p><p id="reg-ok" class="ok"></p>
+  <button class="btn btn-gold" id="btn-register">회원가입</button>
+  <button class="btn btn-outline" id="btn-back-login" style="margin-top:8px">← 로그인으로</button>
+</div>
+</div>
+
+<!-- ===== 설정 ===== -->
+<div id="pg-settings" class="page">
+<div class="card">
+  <h1 class="gold-title" style="font-size:1.7rem">⚙️ 설정</h1>
+  <div class="notice"><span style="color:var(--gold);font-weight:700">💡 비밀번호를 잊으셨나요?</span><br><span style="font-size:.8rem;color:var(--text2)">학번으로 재설정할 수 있어요</span></div>
+  <div id="set-main">
+    <button class="btn btn-outline" id="btn-show-find" style="margin-bottom:8px">🔑 학번으로 비밀번호 재설정</button>
+    <button class="btn btn-outline" id="btn-set-back">← 로그인으로</button>
+  </div>
+  <div id="set-find" style="display:none">
+    <div class="ig"><label>학번 (예: 1120)</label><input id="find-sid" placeholder="학번 4~5자리" inputmode="numeric"></div>
+    <p id="find-err" class="err"></p>
+    <div id="find-result" style="display:none">
+      <div class="notice" id="find-info"></div>
+      <div class="ig"><label>새 비밀번호 (4자 이상)</label><input id="find-pw" type="password" placeholder="새 비밀번호"></div>
+      <div class="ig"><label>새 비밀번호 확인</label><input id="find-pw2" type="password" placeholder="재입력"></div>
+      <button class="btn btn-gold" id="btn-reset-pw">비밀번호 재설정</button>
+    </div>
+    <button class="btn btn-outline" id="btn-find-sid" style="margin-top:8px">계정 찾기</button>
+    <button class="btn btn-outline" id="btn-find-back" style="margin-top:8px">← 뒤로</button>
+    <p id="find-ok" class="ok"></p>
+  </div>
+</div>
+</div>
+
+<!-- ===== 입장 ===== -->
+<div id="pg-room" class="page">
+<div class="card">
+  <span class="bell">🔔</span>
+  <h1 class="gold-title">도전 골든벨</h1>
+  <p class="subtitle">안녕하세요, <strong id="room-name" style="color:var(--gold)"></strong>님!</p>
+  <div id="room-pw-section">
+    <div class="notice"><span style="color:var(--gold);font-weight:700">🔐 입장 암호를 입력하세요</span><br><span style="font-size:.78rem;color:var(--text2)">담당 선생님께 받으세요</span></div>
+    <div class="ig"><label>입장 암호</label><input id="room-pw" type="password" placeholder="암호 입력"></div>
+    <p id="room-err" class="err"></p>
+    <button class="btn btn-gold" id="btn-room-enter" style="margin-top:8px">입장</button>
+    <button class="btn btn-outline" id="btn-logout-room" style="margin-top:8px">로그아웃</button>
+  </div>
+  <div id="room-choice" style="display:none">
+    <div class="notice"><span style="color:var(--gold);font-weight:700">✅ 입장 확인!</span><br><span style="font-size:.82rem;color:var(--text2)" id="room-choice-hint">참가 방식을 선택하세요</span></div>
+    <button class="btn btn-gold" id="btn-participate" style="padding:18px;font-size:1.1rem;margin-top:6px">🏆 골든벨 참가</button>
+    <button class="btn btn-outline" id="btn-spectate" style="padding:18px;font-size:1.1rem;margin-top:10px">👀 관람 (힌트 제공)</button>
+  </div>
+</div>
+</div>
+
+<!-- ===== 대기 ===== -->
+<div id="pg-wait" class="page">
+<div class="card" style="text-align:center">
+  <span class="bell">🔔</span>
+  <h2 class="gold-title" style="font-size:1.5rem">대기 중...</h2>
+  <div class="spinner"></div>
+  <div class="notice">
+    <p style="color:var(--gold);font-weight:700" class="pulse">관리자가 시작할 때까지 기다리세요</p>
+    <p style="font-size:.82rem;color:var(--text2);margin-top:6px" id="wait-info"></p>
+  </div>
+  <p style="font-size:.75rem;color:var(--text2);margin-top:10px">화면을 끄지 마세요. 자동으로 이동합니다.</p>
+</div>
+</div>
+
+<!-- ===== 게임 ===== -->
+<div id="pg-game" class="page" style="justify-content:flex-start;padding-top:16px;align-items:center">
+<div class="card" style="max-width:520px;width:100%">
+  <!-- 규칙 -->
+  <div id="g-rules" style="display:none">
+    <div style="text-align:center;margin-bottom:14px">
+      <div class="timer-big" id="rules-timer">10</div>
+      <p style="color:var(--text2);font-size:.82rem">초 후 게임 시작</p>
+    </div>
+    <h2 style="color:var(--gold);text-align:center;margin-bottom:12px">📋 골든벨 수칙</h2>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <div style="padding:9px 12px;background:var(--bg3);border-radius:8px;font-size:.88rem">📵 휴대폰은 답안 제출 용도로만 사용하세요</div>
+      <div style="padding:9px 12px;background:var(--bg3);border-radius:8px;font-size:.88rem">🤫 다른 참가자와 답을 공유하지 마세요</div>
+      <div style="padding:9px 12px;background:var(--bg3);border-radius:8px;font-size:.88rem">✍️ 제한 시간 내에 반드시 답안을 제출하세요</div>
+      <div style="padding:9px 12px;background:var(--bg3);border-radius:8px;font-size:.88rem">❌ 틀린 경우 뒷자리로 이동하여 관람해주세요</div>
+      <div style="padding:9px 12px;background:var(--bg3);border-radius:8px;font-size:.88rem">🔔 골든벨의 영광을 위해 최선을 다해주세요!</div>
+    </div>
+  </div>
+  <!-- 진행 중 -->
+  <div id="g-playing" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+      <span style="color:var(--text2);font-size:.82rem" id="g-progress">1/30</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span id="g-leave-badge" style="display:none;padding:3px 9px;border-radius:100px;font-size:.7rem;font-weight:700;background:rgba(231,76,60,.18);border:1px solid var(--red);color:#FF7B6B">⚠ 이탈 <span id="g-leave-cnt">0</span>회</span>
+        <span id="g-status-badge" class="badge badge-green">생존중</span>
+      </div>
+    </div>
+    <div style="height:4px;background:var(--border);border-radius:2px;margin-bottom:16px">
+      <div id="g-bar" style="height:100%;background:var(--gold);border-radius:2px;width:3%;transition:width .5s"></div>
+    </div>
+    <h2 id="g-qnum" style="color:var(--gold);margin-bottom:5px;font-size:1.2rem">1번 문제</h2>
+    <p id="g-qtext" style="color:var(--text);margin-bottom:16px;line-height:1.65;font-size:.95rem">문제 로딩 중...</p>
+    <div id="g-hint-box" style="display:none;padding:9px 12px;background:rgba(79,195,247,.1);border:1px solid #4FC3F7;border-radius:8px;margin-bottom:12px">
+      <p style="font-size:.76rem;color:#4FC3F7;font-weight:700">💡 관람자 힌트</p>
+      <p id="g-hint-text" style="font-size:.88rem;margin-top:3px"></p>
+    </div>
+    <div id="g-answer-section">
+      <div id="g-ox" style="display:none">
+        <div class="ox-row">
+          <button class="ox-btn" id="ox-o">O</button>
+          <button class="ox-btn" id="ox-x">X</button>
+        </div>
+      </div>
+      <div id="g-short" style="display:none">
+        <div class="ig" style="margin-bottom:12px"><label>답안 입력</label><input id="g-short-input" placeholder="답안을 입력하세요"></div>
+      </div>
+      <button class="btn btn-gold" id="btn-submit">✅ 제출하기</button>
+    </div>
+    <div id="g-submitted" style="display:none" class="notice">
+      <p style="color:var(--green);font-weight:700;font-size:1rem">✅ 제출 완료!</p>
+      <p style="color:var(--text2);font-size:.82rem;margin-top:4px">내 답안: <strong id="g-my-answer" style="color:var(--gold)"></strong></p>
+      <p style="color:var(--text2);font-size:.78rem;margin-top:3px">정답 공개를 기다리세요...</p>
+    </div>
+    <div class="agrid" id="g-grid"></div>
+  </div>
+  <!-- 정답 공개 -->
+  <div id="g-reveal" style="display:none;text-align:center">
+    <p style="color:var(--text2);margin-bottom:8px;font-size:.84rem" id="g-reveal-qnum"></p>
+    <div style="font-size:1.7rem;font-family:'Black Han Sans',sans-serif;color:var(--gold);padding:18px;background:rgba(255,215,0,.08);border:2px solid var(--gold);border-radius:12px;margin-bottom:14px" id="g-reveal-answer"></div>
+    <div id="g-reveal-ok" style="display:none;padding:16px;background:rgba(39,174,96,.15);border:2px solid var(--green);border-radius:12px"><p style="font-size:1.8rem">🎉</p><p style="color:var(--green);font-weight:700;font-size:1.1rem">정답!</p></div>
+    <div id="g-reveal-fail" style="display:none;padding:16px;background:rgba(192,57,43,.15);border:2px solid var(--red);border-radius:12px"><p style="font-size:1.8rem">😢</p><p style="color:var(--red);font-weight:700;font-size:1.1rem">오답!</p><p style="color:var(--text2);font-size:.84rem;margin-top:4px">뒷자리로 이동하여 관람해주세요</p></div>
+  </div>
+  <!-- 공연 -->
+  <div id="g-intermission" style="display:none;text-align:center">
+    <span style="font-size:3.5rem">🎭</span>
+    <h2 class="gold-title" style="font-size:1.6rem;margin-top:10px">공연 관람</h2>
+    <p style="color:var(--text2);margin-top:10px">잠시 공연을 관람해주세요.<br>공연이 끝나면 게임이 재개됩니다.</p>
+    <div style="margin-top:18px" class="pulse"><span style="color:var(--gold);font-weight:700">🎶 공연 중...</span></div>
+  </div>
+  <!-- 패자부활전 -->
+  <div id="g-revival" style="display:none;text-align:center">
+    <span style="font-size:2.8rem">🔄</span>
+    <h2 class="gold-title" style="font-size:1.6rem;margin-top:8px">패자부활전</h2>
+    <p style="color:var(--text2);margin-top:6px" id="g-revival-desc"></p>
+    <div id="g-revival-elim" style="display:none;margin-top:14px">
+      <p style="color:var(--gold);margin-bottom:10px">신청하면 관리자가 선정합니다</p>
+      <button class="btn btn-gold" id="btn-apply-revival" style="font-size:1rem;padding:15px">🙋 패자부활전 신청</button>
+      <div id="g-revival-applied" style="display:none" class="notice" style="margin-top:12px"><p style="color:var(--green);font-weight:700">✅ 신청 완료!</p><p style="font-size:.82rem;color:var(--text2)">관리자가 선정하면 자동 복귀됩니다</p></div>
+    </div>
+    <div id="g-revival-alive" style="display:none" class="notice" style="margin-top:14px"><p style="color:var(--gold);font-weight:700">🏆 현재 생존 중</p><p style="font-size:.82rem;color:var(--text2)">게임 재개를 기다리세요</p></div>
+    <div id="g-revival-spec" style="display:none" class="notice" style="margin-top:14px"><p style="color:var(--text2)">관람자는 게임 재개를 기다리세요</p></div>
+  </div>
+  <!-- 종료 -->
+  <div id="g-end" style="display:none;text-align:center">
+    <span style="font-size:3.5rem">🏆</span>
+    <h1 class="gold-title" style="margin-top:10px">골든벨!</h1>
+    <div id="g-end-win" style="display:none;margin-top:14px;padding:18px;background:rgba(255,215,0,.1);border:2px solid var(--gold);border-radius:12px"><span style="font-size:4rem">🔔</span><p style="color:var(--gold);font-weight:700;margin-top:8px">🎉 축하합니다! 우승!</p></div>
+    <div id="g-end-lose" style="display:none;margin-top:10px"><p style="color:var(--text2)">참여해주셔서 감사합니다! 수고하셨습니다.</p></div>
+  </div>
+  <!-- 탈락/관람 -->
+  <div id="g-spectate" style="display:none;text-align:center">
+    <p id="g-spec-label" style="color:var(--text2);margin-bottom:8px;font-size:.88rem">👀 관람 중</p>
+    <h2 id="g-spec-qnum" style="color:var(--gold);margin-bottom:8px"></h2>
+    <p id="g-spec-qtext" style="color:var(--text);margin:10px 0;font-size:.93rem;line-height:1.65"></p>
+    <div id="g-spec-hint" style="display:none;margin-top:12px;padding:14px;background:linear-gradient(135deg,rgba(79,195,247,.08),rgba(79,195,247,.02));border-radius:10px;border:1px solid rgba(79,195,247,.3);text-align:left">
+      <p style="font-weight:700;color:var(--blue);margin-bottom:4px;font-size:.9rem">💡 힌트 전달하기</p>
+      <p style="font-size:.74rem;color:var(--text2);margin-bottom:9px">참가자에게 힌트를 전송할 수 있습니다</p>
+      <select id="g-hint-target" style="margin-bottom:7px"></select>
+      <input id="g-hint-input" type="text" placeholder="힌트 내용 입력" style="margin-bottom:7px">
+      <button class="btn btn-gold btn-sm" id="btn-send-hint-spec">📤 전달</button>
+      <p id="g-hint-sent" class="ok" style="display:none">✅ 힌트 전달 완료!</p>
+    </div>
+    <div class="notice" style="margin-top:14px"><p id="g-spec-msg" style="color:var(--text2);font-size:.88rem"></p></div>
+  </div>
+</div>
+</div>
+
+<!-- ===== 관리자 ===== -->
+<div id="pg-admin" class="page" style="align-items:flex-start;justify-content:flex-start">
+<div class="admin-wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <div><h1 style="color:var(--gold);font-size:1.35rem">🔔 골든벨 관리자</h1><p id="admin-name-lbl" style="font-size:.75rem;color:var(--text2)"></p></div>
+    <button class="btn btn-outline btn-sm" id="btn-logout-admin">로그아웃</button>
+  </div>
+  <div class="tab-row" style="flex-wrap:wrap">
+    <button class="tab-btn active" data-atab="control">🎮 진행 제어</button>
+    <button class="tab-btn" data-atab="questions">📝 문제 입력</button>
+    <button class="tab-btn" data-atab="results">📊 결과 현황</button>
+    <button class="tab-btn" data-atab="users">👥 학생 관리</button>
+    <button class="tab-btn" data-atab="admins">🔐 관리자 계정</button>
+  </div>
+
+  <!-- 진행 제어 -->
+  <div id="at-control" class="atab">
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div class="panel" style="flex:0 0 190px">
+        <h3 style="color:var(--gold);margin-bottom:10px">📊 현황</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="stat-box"><div class="num" id="s-total">0</div><div class="lbl">전체 참가자</div></div>
+          <div class="stat-box"><div class="num" id="s-alive" style="color:var(--green)">0</div><div class="lbl">생존</div></div>
+          <div class="stat-box"><div class="num" id="s-elim" style="color:var(--red)">0</div><div class="lbl">탈락</div></div>
+        </div>
+        <div style="padding:9px;background:var(--bg3);border-radius:8px;font-size:.78rem;margin-top:8px">
+          <p style="color:var(--text2)">단계: <span id="s-phase" style="color:var(--gold);font-weight:700">-</span></p>
+          <p style="color:var(--text2);margin-top:3px">문제: <span id="s-qnum" style="color:var(--gold);font-weight:700">0/30</span></p>
+        </div>
+      </div>
+      <div class="panel" style="flex:1;min-width:250px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap">
+          <h3 style="color:var(--gold)">🎮 게임 제어</h3>
+          <button class="btn btn-red btn-sm" id="btn-force-end" style="display:none">🛑 강제 종료</button>
+        </div>
+        <div id="c-waiting">
+          <div class="ig"><label>입장 암호 확인 후 시작 <span style="color:var(--gold)">(현재: <span id="c-pw-current">로딩중...</span>)</span></label><input id="c-pw" type="password" placeholder="입장 암호 입력"></div>
+          <p id="c-pw-err" class="err"></p>
+          <button class="btn btn-gold" id="btn-start-game" style="margin-top:6px">🚀 게임 시작</button>
+        </div>
+        <div id="c-rules" style="display:none" class="notice">
+          <p style="color:var(--gold);font-weight:700">📋 규칙 안내 중...</p>
+          <button class="btn btn-gold btn-sm" id="btn-skip-rules" style="margin-top:8px">즉시 1번 시작</button>
+        </div>
+        <div id="c-playing" style="display:none">
+          <div class="notice" id="c-playing-info" style="text-align:left;margin-bottom:10px"></div>
+          <button class="btn btn-gold" id="btn-reveal" style="margin-bottom:10px">✅ 정답 공개</button>
+          <div style="padding:10px 12px;background:rgba(79,195,247,.06);border-radius:10px;border:1px solid rgba(79,195,247,.2);font-size:.78rem;color:var(--text2)">
+            <p>💡 힌트는 <strong style="color:var(--blue)">관람자가 직접</strong> 참가자에게 전달합니다.</p>
+          </div>
+        </div>
+        <div id="c-reveal" style="display:none">
+          <div style="padding:12px;background:rgba(255,215,0,.08);border:1px solid var(--gold);border-radius:10px;text-align:center;margin-bottom:10px">
+            <p style="font-size:.75rem;color:var(--text2)">공개된 정답</p>
+            <p id="c-reveal-ans" style="color:var(--gold);font-family:'Black Han Sans',sans-serif;font-size:1.25rem;margin-top:3px"></p>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px" id="c-reveal-stats"></div>
+          <button class="btn btn-gold" id="btn-next">▶ 다음 문제</button>
+        </div>
+        <div id="c-intermission" style="display:none;text-align:center">
+          <span style="font-size:2.8rem">🎭</span>
+          <p style="color:var(--text2);margin:10px 0">15번 완료 — 공연 진행 중</p>
+          <button class="btn btn-gold" id="btn-end-intermission">🎬 공연 종료 → 16번 시작</button>
+        </div>
+        <div id="c-revival" style="display:none">
+          <p style="color:var(--gold);font-weight:700;margin-bottom:8px" id="c-revival-title">🔄 패자부활전</p>
+          <div id="c-revival-list"></div>
+          <button class="btn btn-gold" id="btn-end-revival" style="margin-top:8px">▶ 종료 → 다음 문제</button>
+        </div>
+        <div id="c-end" style="display:none;text-align:center">
+          <span style="font-size:2.8rem">🏆</span>
+          <p style="color:var(--gold);font-weight:700;margin-top:8px">게임 종료!</p>
+          <p id="c-end-survivors" style="color:var(--text2);font-size:.84rem"></p>
+          <button class="btn btn-outline" id="btn-reset" style="margin-top:12px">🔄 초기화</button>
+        </div>
+      </div>
+      <div class="panel" style="flex:0 0 190px">
+        <h3 style="color:var(--gold);margin-bottom:9px">👥 참가자</h3>
+        <p style="font-size:.72rem;color:var(--green);margin-bottom:4px">✅ 생존</p>
+        <div id="alive-list" style="max-height:190px;overflow-y:auto;margin-bottom:10px"></div>
+        <p style="font-size:.72rem;color:var(--red);margin-bottom:4px">❌ 탈락</p>
+        <div id="elim-list" style="max-height:140px;overflow-y:auto"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 문제 입력 -->
+  <div id="at-questions" class="atab" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="color:var(--gold)">📝 문제 관리 (30문제)</h3>
+      <button class="btn btn-gold btn-sm" id="btn-save-all-q">💾 전체 저장</button>
+    </div>
+    <div id="q-list" style="display:flex;flex-direction:column;gap:9px"></div>
+  </div>
+
+  <!-- 결과 현황 -->
+  <div id="at-results" class="atab" style="display:none">
+    <h3 style="color:var(--gold);margin-bottom:12px" id="results-title">📊 답안 현황</h3>
+    <div class="panel" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+        <h3 style="color:var(--gold);font-size:1rem">🪑 좌석 배치도</h3>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" data-seat-view="current">현재 문제 정답/오답</button>
+          <button class="btn btn-outline btn-sm" data-seat-view="overall">전체 생존/탈락</button>
+        </div>
+      </div>
+      <div class="seat-wrap"><div id="admin-seat-grid" class="seat-grid"></div></div>
+      <div class="seat-legend" id="admin-seat-legend"></div>
+    </div>
+    <div id="results-table"></div>
+    <div class="divider"></div>
+    <h3 style="color:var(--gold);margin-bottom:8px">🚪 미제출</h3>
+    <div id="results-missing"></div>
+  </div>
+
+  <!-- 학생 관리 -->
+  <div id="at-users" class="atab" style="display:none">
+    <h3 style="color:var(--gold);margin-bottom:12px">👥 학생 목록</h3>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <select id="f-grade" style="width:auto"><option value="all">전체 학년</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
+      <select id="f-class" style="width:auto"><option value="all">전체 반</option><option value="1">1반</option><option value="2">2반</option><option value="3">3반</option><option value="4">4반</option><option value="5">5반</option></select>
+      <span id="users-count" class="badge badge-gray" style="padding:7px 12px"></span>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>이름</th><th>학번</th><th>학년/반/번호</th><th>아이디</th><th>자리</th><th>역할</th><th>이탈</th><th>상태</th></tr></thead><tbody id="users-tbody"></tbody></table></div>
+  </div>
+
+  <!-- 관리자 계정 -->
+  <div id="at-admins" class="atab" style="display:none">
+    <h3 style="color:var(--gold);margin-bottom:12px">🔐 관리자 계정 관리</h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <div style="padding:8px 12px;background:var(--bg3);border-radius:8px"><span style="color:#FFD700;font-weight:700;font-size:.82rem">총관리자</span><p style="font-size:.69rem;color:var(--text2);margin-top:2px">모든 기능 + 계정관리</p></div>
+      <div style="padding:8px 12px;background:var(--bg3);border-radius:8px"><span style="color:#4FC3F7;font-weight:700;font-size:.82rem">진행자</span><p style="font-size:.69rem;color:var(--text2);margin-top:2px">게임 진행·제어</p></div>
+      <div style="padding:8px 12px;background:var(--bg3);border-radius:8px"><span style="color:#A29BFE;font-weight:700;font-size:.82rem">문제출제자</span><p style="font-size:.69rem;color:var(--text2);margin-top:2px">문제 입력만</p></div>
+      <div style="padding:8px 12px;background:var(--bg3);border-radius:8px"><span style="color:#81ECEC;font-weight:700;font-size:.82rem">열람자</span><p style="font-size:.69rem;color:var(--text2);margin-top:2px">열람만</p></div>
+    </div>
+    <div class="panel" style="margin-bottom:14px">
+      <p style="color:var(--gold);font-weight:700;margin-bottom:10px">➕ 새 관리자 계정 생성</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div class="ig" style="margin-bottom:0"><label>아이디</label><input id="na-id" placeholder="admin01"></div>
+        <div class="ig" style="margin-bottom:0"><label>비밀번호</label><input id="na-pw" type="password" placeholder="4자 이상"></div>
+        <div class="ig" style="margin-bottom:0"><label>이름</label><input id="na-name" placeholder="홍길동 선생님"></div>
+        <div class="ig" style="margin-bottom:0"><label>역할</label>
+          <select id="na-role"><option value="super">총관리자</option><option value="host" selected>진행자</option><option value="setter">문제출제자</option><option value="viewer">열람자</option></select>
+        </div>
+      </div>
+      <p id="na-msg" class="err"></p>
+      <button class="btn btn-gold btn-sm" id="btn-create-admin" style="margin-top:8px">계정 생성</button>
+    </div>
+    <div style="margin-bottom:10px;padding:10px 14px;background:rgba(255,215,0,.05);border:1px solid rgba(255,215,0,.2);border-radius:8px;font-size:.82rem">
+      <p style="color:var(--gold);font-weight:700;margin-bottom:4px">🔑 신규 관리자 계정 생성 승인키</p>
+      <p id="admin-key-display" style="color:var(--text2)">로딩 중...</p>
+      <button class="btn btn-outline btn-sm" id="btn-regen-key" style="margin-top:8px">🔄 승인키 재발급</button>
+    </div>
+    <div style="margin-bottom:10px;padding:10px 14px;background:rgba(255,215,0,.05);border:1px solid rgba(255,215,0,.2);border-radius:8px;font-size:.82rem">
+      <p style="color:var(--gold);font-weight:700;margin-bottom:4px">🔔 골든벨 오픈키 (학생 입장 암호)</p>
+      <p style="font-size:.74rem;color:var(--text2);margin-bottom:6px">학생이 로그인 후 입장 시 입력하는 암호입니다. 게임 시작 전 학생들에게 안내하세요.</p>
+      <p id="room-pw-display" style="color:var(--gold);font-family:'Black Han Sans',sans-serif;font-size:1.1rem">로딩 중...</p>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <input id="new-room-pw" type="text" placeholder="새 오픈키 입력 (예: GB2026)" style="flex:1;min-width:160px">
+        <button class="btn btn-outline btn-sm" id="btn-change-room-pw">변경</button>
+        <button class="btn btn-outline btn-sm" id="btn-regen-room-pw">🔄 자동 재발급</button>
+      </div>
+      <p id="room-pw-msg" class="err" style="margin-top:6px"></p>
+    </div>
+    <div style="overflow-x:auto"><table><thead><tr><th>이름</th><th>아이디</th><th>역할</th><th>작업</th></tr></thead><tbody id="admins-tbody"></tbody></table></div>
+  </div>
+</div>
+</div>
+
+<script>
+// ── Firebase 초기화 ────────────────────────────────
+firebase.initializeApp({
+  apiKey:"AIzaSyBYtbEPuVPKQG20A4DlMzhdpi8Twr4vNag",
+  authDomain:"goldenbell11-db379.firebaseapp.com",
+  projectId:"goldenbell11-db379",
+  storageBucket:"goldenbell11-db379.firebasestorage.app",
+  messagingSenderId:"6204399959",
+  appId:"1:6204399959:web:5b16f9da2a7300a78d1e12"
+});
+const db = firebase.firestore();
+
+// ── 페이지 로드 시 자동 시드 (테스트 계정 + 기본 설정) ──
+(async function autoSeed(){
+  try {
+    // 1) 테스트 학생 계정 5개 (가상 6반, 1열 1~5번 자리 배정)
+    const TEST_USERS=[
+      {id:'test1',password:'test1234',name:'테스트1',studentId:'1601',grade:1,classNum:6,number:1,joinType:'participant',seat:0},
+      {id:'test2',password:'test1234',name:'테스트2',studentId:'1602',grade:1,classNum:6,number:2,joinType:'participant',seat:1},
+      {id:'test3',password:'test1234',name:'테스트3',studentId:'1603',grade:1,classNum:6,number:3,joinType:'participant',seat:2},
+      {id:'test4',password:'test1234',name:'테스트4',studentId:'1604',grade:1,classNum:6,number:4,joinType:'spectator',seat:3},
+      {id:'test5',password:'test1234',name:'테스트5',studentId:'1605',grade:1,classNum:6,number:5,joinType:'spectator',seat:4}
+    ];
+    for(const t of TEST_USERS){
+      const s=await db.collection('users').doc(t.id).get();
+      if(!s.exists){
+        await db.collection('users').doc(t.id).set({...t,status:'alive',role:'user'});
+        console.log('[seed] 테스트 계정 생성:', t.id);
+      }
+    }
+    // 2) 시드 총관리자
+    const adm=await db.collection('admins').doc('hjw1138').get();
+    if(!adm.exists){
+      await db.collection('admins').doc('hjw1138').set({id:'hjw1138',password:'samsung-1138',name:'황진우',adminRole:'super'});
+      console.log('[seed] 총관리자 계정 생성');
+    }
+    // 3) 관리자 승인키
+    const akey=await db.collection('config').doc('adminKey').get();
+    if(!akey.exists){
+      await db.collection('config').doc('adminKey').set({key:'GB_ADMIN_KEY_2026'});
+      console.log('[seed] 관리자 승인키 생성');
+    }
+    // 4) 골든벨 오픈키
+    const rkey=await db.collection('config').doc('roomPw').get();
+    if(!rkey.exists){
+      await db.collection('config').doc('roomPw').set({key:'GB2026'});
+      console.log('[seed] 골든벨 오픈키 생성');
+    }
+  } catch(e){ console.warn('[seed] 시드 오류:',e); }
+})();
+
+// ── 전역 상태 ──────────────────────────────────────
+const APP = {
+  user:null, gs:null,
+  questions:Array.from({length:30},(_,i)=>({id:i+1,text:'',type:'short',answer:''})),
+  users:[], admins:[], answers:[], myOx:null,
+  unsubGame:null, unsubAnswers:null, unsubRevival:null, unsubHint:null, unsubForceEnd:null, rulesTimer:null,
+  leaveDetectionActive:false, leaveCount:0, lastLeaveAt:0,
+  ROOM_PW:'GB2026',
+  ROLE_LABELS:{super:'총관리자',host:'진행자',setter:'문제출제자',viewer:'열람자'},
+  ROLE_COLORS:{super:'#FFD700',host:'#4FC3F7',setter:'#A29BFE',viewer:'#81ECEC'},
+  ADMIN_REG_KEY:'GB_ADMIN_KEY_2026' // 신규 관리자 등록 승인키
+};
+
+// ── DB 헬퍼 ───────────────────────────────────────
+const DB = {
+  async getUser(id){ const s=await db.collection('users').doc(id).get(); return s.exists?s.data():null; },
+  async setUser(id,d){ await db.collection('users').doc(id).set(d,{merge:true}); },
+  async updateUser(id,d){ await db.collection('users').doc(id).update(d); },
+  async getAllUsers(){ const s=await db.collection('users').get(); return s.docs.map(d=>({id:d.id,...d.data()})); },
+  listenUsers(cb){ return db.collection('users').onSnapshot(s=>cb(s.docs.map(d=>({id:d.id,...d.data()})))); },
+
+  async getAdmin(id){ const s=await db.collection('admins').doc(id).get(); return s.exists?s.data():null; },
+  async setAdmin(id,d){ await db.collection('admins').doc(id).set(d,{merge:true}); },
+  async deleteAdmin(id){ await db.collection('admins').doc(id).delete(); },
+  listenAdmins(cb){ return db.collection('admins').onSnapshot(s=>cb(s.docs.map(d=>({id:d.id,...d.data()})))); },
+
+  async getGS(){ const s=await db.collection('game').doc('state').get(); return s.exists?s.data():null; },
+  async setGS(d){ await db.collection('game').doc('state').set(d,{merge:true}); },
+  listenGS(cb){ return db.collection('game').doc('state').onSnapshot(s=>cb(s.exists?s.data():null)); },
+
+  async getQ(n){ const s=await db.collection('questions').doc(String(n)).get(); return s.exists?s.data():null; },
+  async setQ(n,d){ await db.collection('questions').doc(String(n)).set(d); },
+  async getAllQ(){ const s=await db.collection('questions').get(); const a=s.docs.map(d=>({id:Number(d.id),...d.data()})); a.sort((a,b)=>a.id-b.id); return a; },
+
+  async submitAns(uid,qn,answer){ await db.collection('answers').doc(`${uid}_${qn}`).set({uid,qn,answer,t:firebase.firestore.FieldValue.serverTimestamp()}); },
+  listenAns(qn,cb){ return db.collection('answers').where('qn','==',qn).onSnapshot(s=>cb(s.docs.map(d=>d.data()))); },
+  async getAns(qn){ const s=await db.collection('answers').where('qn','==',qn).get(); return s.docs.map(d=>d.data()); },
+
+  async sendHint(uid,hint,qn){ await db.collection('hints').doc(uid).set({hint,qn,t:firebase.firestore.FieldValue.serverTimestamp()}); },
+  listenHint(uid,cb){ return db.collection('hints').doc(uid).onSnapshot(s=>cb(s.exists?s.data():null)); },
+
+  async applyRevival(uid){ await db.collection('revival').doc(uid).set({uid,t:firebase.firestore.FieldValue.serverTimestamp()}); },
+  listenRevival(cb){ return db.collection('revival').onSnapshot(s=>cb(s.docs.map(d=>d.data()))); },
+  async clearRevival(){ const s=await db.collection('revival').get(); await Promise.all(s.docs.map(d=>d.ref.delete())); },
+
+  async getAdminKey(){ const s=await db.collection('config').doc('adminKey').get(); return s.exists?s.data().key:null; },
+  async setAdminKey(key){ await db.collection('config').doc('adminKey').set({key}); },
+
+  async getRoomPw(){ const s=await db.collection('config').doc('roomPw').get(); return s.exists?s.data().key:null; },
+  async setRoomPw(key){ await db.collection('config').doc('roomPw').set({key}); },
+  listenRoomPw(cb){ return db.collection('config').doc('roomPw').onSnapshot(s=>cb(s.exists?s.data().key:null)); },
+};
+
+// ── 유틸 ──────────────────────────────────────────
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function getMaxNum(grade,cls){ if(grade===1) return cls===5?21:20; return 22; }
+function norm(s){ return (s==null?'':String(s)).trim().toLowerCase().replace(/\s+/g,'').replace(/[.,!?]/g,''); }
+
+// ── 로그인 탭 ─────────────────────────────────────
+let loginTab='user';
+document.getElementById('tab-user').addEventListener('click',function(){
+  loginTab='user';
+  document.querySelectorAll('#pg-login > .card > .tab-row .tab-btn').forEach(b=>b.classList.remove('active'));
+  this.classList.add('active');
+  document.getElementById('login-user-section').style.display='block';
+  document.getElementById('login-admin-section').style.display='none';
+});
+document.getElementById('tab-admin').addEventListener('click',function(){
+  loginTab='admin';
+  document.querySelectorAll('#pg-login > .card > .tab-row .tab-btn').forEach(b=>b.classList.remove('active'));
+  this.classList.add('active');
+  document.getElementById('login-user-section').style.display='none';
+  document.getElementById('login-admin-section').style.display='block';
+});
+
+// 관리자 서브탭
+document.getElementById('atab-login').addEventListener('click',function(){
+  document.querySelectorAll('#login-admin-section .tab-btn').forEach(b=>b.classList.remove('active'));
+  this.classList.add('active');
+  document.getElementById('admin-login-form').style.display='block';
+  document.getElementById('admin-reg-form').style.display='none';
+});
+document.getElementById('atab-register').addEventListener('click',function(){
+  document.querySelectorAll('#login-admin-section .tab-btn').forEach(b=>b.classList.remove('active'));
+  this.classList.add('active');
+  document.getElementById('admin-login-form').style.display='none';
+  document.getElementById('admin-reg-form').style.display='block';
+});
+
+// ── 학생 로그인 ───────────────────────────────────
+document.getElementById('btn-u-login').addEventListener('click', doUserLogin);
+document.getElementById('u-login-pw').addEventListener('keydown',e=>{ if(e.key==='Enter') doUserLogin(); });
+async function doUserLogin(){
+  const id=document.getElementById('u-login-id').value.trim();
+  const pw=document.getElementById('u-login-pw').value.trim();
+  const err=document.getElementById('u-login-err');
+  err.textContent='';
+  if(!id||!pw) return err.textContent='아이디와 비밀번호를 입력하세요';
+  try {
+    const user=await DB.getUser(id);
+    if(!user) return err.textContent='존재하지 않는 아이디입니다';
+    if(user.password!==pw) return err.textContent='비밀번호가 틀렸습니다';
+    // 골든벨 오픈키 동기화
+    const rpw=await DB.getRoomPw();
+    if(rpw) APP.ROOM_PW=rpw;
+    APP.user={uid:id,name:user.name,studentId:user.studentId,grade:user.grade,classNum:user.classNum,role:'user',status:user.status||'alive',joinType:user.joinType||'participant'};
+    document.getElementById('room-name').textContent=user.name;
+    showPage('pg-room');
+    startForceEndListener();
+  } catch(e){ err.textContent='오류: '+e.message; }
+}
+
+// 학생 전용: 로그인 직후부터 강제 종료 감지 (pg-room/wait 단계 포함)
+function startForceEndListener(){
+  if(APP.unsubForceEnd){ APP.unsubForceEnd(); }
+  // 이 학생이 로그인한 시각을 기준으로 잡고, 그 이후 발생한 강제 종료만 감지
+  APP.loginAt=Date.now();
+  APP.unsubForceEnd=DB.listenGS(gs=>{
+    if(!APP.user||APP.user.role!=='user') return;
+    if(!gs?.forceEnded) return;
+    // 로그인 이전에 이미 강제 종료된 상태였다면 무시 (신규 로그인자 보호)
+    const t=gs.forceEndedAt||0;
+    if(t<APP.loginAt) return;
+    handleStudentForceEnd();
+  });
+}
+
+// 강제 종료 처리: 로그아웃 X, 입장 암호 화면으로만 복귀
+function handleStudentForceEnd(){
+  alert('🛑 관리자가 게임을 강제 종료했습니다.\n입장 화면으로 돌아갑니다.');
+  // 게임/힌트 리스너만 해제 (forceEnd 리스너는 유지 → 다음 게임도 감지)
+  if(APP.unsubGame){ APP.unsubGame(); APP.unsubGame=null; }
+  if(APP.unsubHint){ APP.unsubHint(); APP.unsubHint=null; }
+  // 로그인 시각 갱신 → 같은 forceEnded 이벤트가 다시 트리거되는 것 방지
+  APP.loginAt=Date.now();
+  // 입장 화면 초기화
+  document.getElementById('room-pw-section').style.display='block';
+  document.getElementById('room-choice').style.display='none';
+  document.getElementById('room-pw').value='';
+  document.getElementById('room-err').textContent='';
+  if(APP.user) document.getElementById('room-name').textContent=APP.user.name||'';
+  showPage('pg-room');
+}
+
+// ── 관리자 로그인 ─────────────────────────────────
+document.getElementById('btn-a-login').addEventListener('click', doAdminLogin);
+document.getElementById('a-login-pw').addEventListener('keydown',e=>{ if(e.key==='Enter') doAdminLogin(); });
+async function doAdminLogin(){
+  const id=document.getElementById('a-login-id').value.trim();
+  const pw=document.getElementById('a-login-pw').value.trim();
+  const err=document.getElementById('a-login-err');
+  err.textContent='';
+  if(!id||!pw) return err.textContent='아이디와 비밀번호를 입력하세요';
+  try {
+    // 시드 총관리자
+    if(id==='hjw1138'&&pw==='samsung-1138'){
+      // 자동 시드에서 이미 등록됨 — 만일을 위한 보강
+      const a=await DB.getAdmin('hjw1138');
+      if(!a) await DB.setAdmin('hjw1138',{id:'hjw1138',password:'samsung-1138',name:'황진우',adminRole:'super'});
+      // 오픈키 동기화
+      const rpw=await DB.getRoomPw();
+      if(rpw) APP.ROOM_PW=rpw;
+      APP.user={uid:'hjw1138',name:'황진우',role:'admin',adminRole:'super'};
+      enterAdmin(); return;
+    }
+    const admin=await DB.getAdmin(id);
+    if(!admin) return err.textContent='존재하지 않는 관리자 아이디입니다';
+    if(admin.password!==pw) return err.textContent='비밀번호가 틀렸습니다';
+    // 골든벨 오픈키 동기화
+    const rpw=await DB.getRoomPw();
+    if(rpw) APP.ROOM_PW=rpw;
+    APP.user={uid:id,name:admin.name,role:'admin',adminRole:admin.adminRole};
+    enterAdmin();
+  } catch(e){ err.textContent='오류: '+e.message; }
+}
+
+// ── 관리자 계정 생성 (로그인 페이지) ─────────────
+document.getElementById('btn-a-register').addEventListener('click', async function(){
+  const key=document.getElementById('a-reg-key').value.trim();
+  const id=document.getElementById('a-reg-id').value.trim();
+  const pw=document.getElementById('a-reg-pw').value.trim();
+  const pw2=document.getElementById('a-reg-pw2').value.trim();
+  const name=document.getElementById('a-reg-name').value.trim();
+  const role=document.getElementById('a-reg-role').value;
+  const err=document.getElementById('a-reg-err');
+  const ok=document.getElementById('a-reg-ok');
+  err.textContent=''; ok.textContent='';
+  if(!key||!id||!pw||!pw2||!name) return err.textContent='모든 항목을 입력하세요';
+  // 승인키 확인
+  const validKey=await DB.getAdminKey();
+  if(!validKey||key!==validKey) return err.textContent='승인키가 올바르지 않습니다';
+  if(id.length<3) return err.textContent='아이디는 3자 이상이어야 합니다';
+  if(pw.length<4) return err.textContent='비밀번호는 4자 이상이어야 합니다';
+  if(pw!==pw2) return err.textContent='비밀번호가 일치하지 않습니다';
+  const ex=await DB.getAdmin(id);
+  if(ex) return err.textContent='이미 존재하는 아이디입니다';
+  await DB.setAdmin(id,{id,password:pw,name,adminRole:role});
+  ok.textContent='✅ 관리자 계정이 생성되었습니다! 로그인 탭에서 로그인하세요';
+  document.getElementById('a-reg-key').value='';
+  document.getElementById('a-reg-id').value='';
+  document.getElementById('a-reg-pw').value='';
+  document.getElementById('a-reg-pw2').value='';
+  document.getElementById('a-reg-name').value='';
+});
+
+function enterAdmin(){
+  document.getElementById('admin-name-lbl').textContent=APP.user.name+' ['+(APP.ROLE_LABELS[APP.user.adminRole]||'')+']';
+  showPage('pg-admin');
+  startAdminListeners();
+  renderQList();
+  // 진행 제어 탭의 현재 오픈키 표시
+  const cpw=document.getElementById('c-pw-current');
+  if(cpw) cpw.textContent=APP.ROOM_PW||'(없음)';
+  // 승인키 표시 (총관리자만)
+  if(APP.user.adminRole==='super'){
+    DB.getAdminKey().then(k=>{ document.getElementById('admin-key-display').textContent=k||'(없음)'; });
+  }
+}
+
+// ── 학생 회원가입 ─────────────────────────────────
+document.getElementById('btn-go-register').addEventListener('click',async()=>{
+  showPage('pg-register');
+  await renderRegSeatGrid();
+});
+document.getElementById('btn-back-login').addEventListener('click',()=>showPage('pg-login'));
+document.getElementById('btn-go-settings').addEventListener('click',()=>showPage('pg-settings'));
+
+// ── 좌석 시스템 ───────────────────────────────────
+const SEAT_COLS=12, SEAT_ROWS=20; // 가로 12, 세로 20
+
+function seatLabel(idx){
+  // idx: 0..(240-1) → 행(R), 열(C)로 표시. R1-C1 ~ R20-C12
+  const r=Math.floor(idx/SEAT_COLS)+1;
+  const c=(idx%SEAT_COLS)+1;
+  return `${r}열 ${c}번`;
+}
+
+async function renderRegSeatGrid(){
+  const grid=document.getElementById('reg-seat-grid');
+  grid.innerHTML='';
+  // 무대 표시
+  const stage=document.createElement('div');
+  stage.className='seat-stage';
+  stage.textContent='🎤 무대 (정면)';
+  grid.appendChild(stage);
+  // 사용 중인 좌석 조회
+  let taken=new Set();
+  try {
+    const users=await DB.getAllUsers();
+    users.forEach(u=>{ if(u.seat!=null) taken.add(Number(u.seat)); });
+  } catch(e){}
+  for(let i=0;i<SEAT_COLS*SEAT_ROWS;i++){
+    const s=document.createElement('div');
+    s.className='seat'+(taken.has(i)?' taken':'');
+    s.dataset.seat=i;
+    s.textContent=(Math.floor(i/SEAT_COLS)+1)+'-'+((i%SEAT_COLS)+1);
+    s.title=seatLabel(i)+(taken.has(i)?' (사용중)':'');
+    if(!taken.has(i)){
+      s.addEventListener('click',function(){
+        document.querySelectorAll('#reg-seat-grid .seat.sel').forEach(el=>el.classList.remove('sel'));
+        this.classList.add('sel');
+        document.getElementById('reg-seat').value=this.dataset.seat;
+        document.getElementById('reg-seat-label').textContent=seatLabel(Number(this.dataset.seat));
+      });
+    }
+    grid.appendChild(s);
+  }
+}
+
+function updatePreview(){
+  const g=Number(document.getElementById('reg-grade').value);
+  const c=Number(document.getElementById('reg-class').value);
+  const n=document.getElementById('reg-number').value;
+  const max=getMaxNum(g,c);
+  document.getElementById('reg-num-label').textContent=`번호 (1~${max})`;
+  document.getElementById('reg-number').max=max;
+  document.getElementById('preview-sid').textContent=g&&c&&n?String(g)+String(c)+String(n).padStart(2,'0'):'—';
+}
+['reg-grade','reg-class'].forEach(id=>document.getElementById(id).addEventListener('change',updatePreview));
+document.getElementById('reg-number').addEventListener('input',updatePreview);
+
+// ── 참여 방식 선택 (회원가입) ─────────────────────
+document.querySelectorAll('.join-opt').forEach(opt=>{
+  opt.addEventListener('click',function(){
+    document.querySelectorAll('.join-opt').forEach(o=>{
+      o.classList.remove('sel');
+      o.style.borderColor='var(--border)';
+      o.style.background='var(--bg3)';
+      o.querySelector('div:nth-child(2)').style.color='var(--text)';
+    });
+    this.classList.add('sel');
+    this.style.borderColor='var(--gold)';
+    this.style.background='rgba(255,215,0,.08)';
+    this.querySelector('div:nth-child(2)').style.color='var(--gold)';
+    document.getElementById('reg-join-type').value=this.dataset.join;
+  });
+});
+
+document.getElementById('btn-register').addEventListener('click', async function(){
+  const id=document.getElementById('reg-id').value.trim();
+  const pw=document.getElementById('reg-pw').value.trim();
+  const pw2=document.getElementById('reg-pw2').value.trim();
+  const name=document.getElementById('reg-name').value.trim();
+  const grade=Number(document.getElementById('reg-grade').value);
+  const classNum=Number(document.getElementById('reg-class').value);
+  const number=Number(document.getElementById('reg-number').value);
+  const joinType=document.getElementById('reg-join-type').value||'participant';
+  const seatRaw=document.getElementById('reg-seat').value;
+  const err=document.getElementById('reg-err');
+  const ok=document.getElementById('reg-ok');
+  err.textContent=''; ok.textContent='';
+  if(!id||!pw||!pw2||!name||!number) return err.textContent='모든 항목을 입력하세요';
+  if(id.length<3) return err.textContent='아이디는 3자 이상이어야 합니다';
+  if(pw.length<4) return err.textContent='비밀번호는 4자 이상이어야 합니다';
+  if(pw!==pw2) return err.textContent='비밀번호가 일치하지 않습니다';
+  const max=getMaxNum(grade,classNum);
+  if(number<1||number>max) return err.textContent=`번호는 1~${max} 사이로 입력하세요`;
+  if(seatRaw===''||seatRaw==null) return err.textContent='자리를 선택하세요';
+  const seat=Number(seatRaw);
+  try {
+    const ex=await DB.getUser(id);
+    if(ex) return err.textContent='이미 사용 중인 아이디입니다';
+    // 좌석 중복 재확인
+    const allUsers=await DB.getAllUsers();
+    if(allUsers.some(u=>u.seat===seat)) return err.textContent='해당 자리는 이미 사용 중입니다. 다른 자리를 선택하세요';
+    const studentId=String(grade)+String(classNum)+String(number).padStart(2,'0');
+    await DB.setUser(id,{id,password:pw,name,studentId,grade,classNum,number,status:'alive',role:'user',joinType,seat});
+    const joinLabel=joinType==='participant'?'🏆 골든벨 참여자':'👀 관람자';
+    ok.textContent=`✅ 회원가입 완료! (${joinLabel}, ${seatLabel(seat)}) 로그인 페이지로 이동합니다...`;
+    setTimeout(()=>showPage('pg-login'),1800);
+  } catch(e){ err.textContent='오류: '+e.message; }
+});
+
+// ── 설정 ──────────────────────────────────────────
+document.getElementById('btn-set-back').addEventListener('click',()=>showPage('pg-login'));
+document.getElementById('btn-show-find').addEventListener('click',()=>{
+  document.getElementById('set-main').style.display='none';
+  document.getElementById('set-find').style.display='block';
+});
+document.getElementById('btn-find-back').addEventListener('click',()=>{
+  document.getElementById('set-find').style.display='none';
+  document.getElementById('set-main').style.display='block';
+  document.getElementById('find-err').textContent='';
+  document.getElementById('find-result').style.display='none';
+  document.getElementById('btn-find-sid').style.display='block';
+});
+document.getElementById('btn-find-sid').addEventListener('click', async function(){
+  const sid=document.getElementById('find-sid').value.trim();
+  const err=document.getElementById('find-err');
+  err.textContent='';
+  if(!sid) return err.textContent='학번을 입력하세요';
+  try {
+    const users=await DB.getAllUsers();
+    const found=users.find(u=>u.studentId===sid);
+    if(!found) return err.textContent='해당 학번의 계정을 찾을 수 없습니다';
+    document.getElementById('find-info').innerHTML=`✅ <strong>${found.name}</strong> (아이디: ${found.id})`;
+    document.getElementById('find-result').style.display='block';
+    document.getElementById('find-result').dataset.uid=found.id;
+    this.style.display='none';
+  } catch(e){ err.textContent='오류: '+e.message; }
+});
+document.getElementById('btn-reset-pw').addEventListener('click', async function(){
+  const pw=document.getElementById('find-pw').value.trim();
+  const pw2=document.getElementById('find-pw2').value.trim();
+  const err=document.getElementById('find-err');
+  err.textContent='';
+  if(!pw||!pw2) return err.textContent='비밀번호를 입력하세요';
+  if(pw.length<4) return err.textContent='4자 이상 입력하세요';
+  if(pw!==pw2) return err.textContent='비밀번호가 일치하지 않습니다';
+  try {
+    const uid=document.getElementById('find-result').dataset.uid;
+    await DB.updateUser(uid,{password:pw});
+    document.getElementById('find-ok').textContent='✅ 비밀번호가 재설정되었습니다!';
+    setTimeout(()=>showPage('pg-login'),1800);
+  } catch(e){ err.textContent='오류: '+e.message; }
+});
+
+// ── 입장 ──────────────────────────────────────────
+document.getElementById('btn-room-enter').addEventListener('click', async function(){
+  const pw=document.getElementById('room-pw').value.trim();
+  // 최신 오픈키 확인
+  try {
+    const rpw=await DB.getRoomPw();
+    if(rpw) APP.ROOM_PW=rpw;
+  } catch(e){}
+  if(pw!==APP.ROOM_PW) return document.getElementById('room-err').textContent='암호가 틀렸습니다';
+  document.getElementById('room-pw-section').style.display='none';
+  document.getElementById('room-choice').style.display='block';
+  // 회원가입 시 선택한 참여 방식 강조
+  const jt=APP.user?.joinType||'participant';
+  const hint=document.getElementById('room-choice-hint');
+  const bp=document.getElementById('btn-participate');
+  const bs=document.getElementById('btn-spectate');
+  if(jt==='participant'){
+    hint.innerHTML='회원가입 시 선택한 방식: <strong style="color:var(--gold)">🏆 골든벨 참여자</strong><br><span style="font-size:.72rem">변경하려면 다른 버튼을 누르세요</span>';
+    bp.className='btn btn-gold'; bp.style.cssText='padding:18px;font-size:1.1rem;margin-top:6px';
+    bs.className='btn btn-outline'; bs.style.cssText='padding:18px;font-size:1.1rem;margin-top:10px';
+  } else {
+    hint.innerHTML='회원가입 시 선택한 방식: <strong style="color:var(--gold)">👀 관람자</strong><br><span style="font-size:.72rem">변경하려면 다른 버튼을 누르세요</span>';
+    bp.className='btn btn-outline'; bp.style.cssText='padding:18px;font-size:1.1rem;margin-top:6px';
+    bs.className='btn btn-gold'; bs.style.cssText='padding:18px;font-size:1.1rem;margin-top:10px';
+  }
+});
+document.getElementById('room-pw').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('btn-room-enter').click(); });
+document.getElementById('btn-participate').addEventListener('click',()=>joinAs('participant'));
+document.getElementById('btn-spectate').addEventListener('click',()=>joinAs('spectator'));
+document.getElementById('btn-logout-room').addEventListener('click',doLogout);
+document.getElementById('btn-logout-admin').addEventListener('click',doLogout);
+
+async function joinAs(role){
+  try {
+    await DB.updateUser(APP.user.uid,{roomRole:role,status:'alive',leaveCount:0});
+    APP.user.roomRole=role;
+    APP.leaveCount=0;
+    document.getElementById('wait-info').textContent=`이름: ${APP.user.name} | 학번: ${APP.user.studentId}`;
+    showPage('pg-wait');
+    startUserGSListener();
+  } catch(e){ alert('오류: '+e.message); }
+}
+function doLogout(){
+  APP.user=null;
+  if(APP.unsubGame){ APP.unsubGame(); APP.unsubGame=null; }
+  if(APP.unsubHint){ APP.unsubHint(); APP.unsubHint=null; }
+  if(APP.unsubForceEnd){ APP.unsubForceEnd(); APP.unsubForceEnd=null; }
+  // 이탈 감지 초기화
+  APP.leaveDetectionActive=false;
+  APP.leaveCount=0;
+  document.getElementById('leave-warn').style.display='none';
+  // 입장 화면 초기화
+  document.getElementById('room-pw-section').style.display='block';
+  document.getElementById('room-choice').style.display='none';
+  document.getElementById('room-pw').value='';
+  document.getElementById('room-err').textContent='';
+  showPage('pg-login');
+}
+
+// ── 사용자 게임 리스너 ─────────────────────────────
+function startUserGSListener(){
+  if(APP.unsubGame){ APP.unsubGame(); }
+  APP.unsubGame=DB.listenGS(gs=>{
+    APP.gs=gs;
+    // 강제 종료 감지는 startForceEndListener에서 일괄 처리 → 여기서는 게임 단계만 진행
+    // 단, 로그인 이후 발생한 forceEnded만 무시 (이전 잔여 플래그는 정상 게임 진행 허용)
+    if(gs?.forceEnded&&(gs.forceEndedAt||0)>=APP.loginAt) return;
+    if(!gs||gs.phase==='waiting') return;
+    handleUserGS(gs);
+  });
+}
+
+function hideGameSections(){
+  ['g-rules','g-playing','g-reveal','g-intermission','g-revival','g-end','g-spectate'].forEach(id=>{
+    document.getElementById(id).style.display='none';
+  });
+}
+
+function handleUserGS(gs){
+  const u=APP.user;
+  if(!u) return;
+  const isElim=(gs.eliminated||[]).includes(u.uid);
+  const isSpec=u.roomRole==='spectator';
+  // 부활 처리
+  if((gs.revived||[]).includes(u.uid)){ APP.user.status='alive'; }
+  showPage('pg-game');
+  hideGameSections();
+
+  if(gs.phase==='rules'){ showRules(); return; }
+  if(gs.phase==='end'){
+    document.getElementById('g-end').style.display='block';
+    const won=!isElim&&!isSpec;
+    document.getElementById('g-end-win').style.display=won?'block':'none';
+    document.getElementById('g-end-lose').style.display=!won?'block':'none';
+    return;
+  }
+  if(gs.phase==='intermission'){ document.getElementById('g-intermission').style.display='block'; return; }
+  if(gs.phase==='revival'){
+    document.getElementById('g-revival').style.display='block';
+    document.getElementById('g-revival-desc').textContent=gs.revivalRound===1?'10문제 완료! 패자부활전!':'20문제 완료! 패자부활전!';
+    document.getElementById('g-revival-elim').style.display=isElim?'block':'none';
+    document.getElementById('g-revival-alive').style.display=(!isElim&&!isSpec)?'block':'none';
+    document.getElementById('g-revival-spec').style.display=isSpec?'block':'none';
+    return;
+  }
+  if(gs.phase==='reveal'){
+    document.getElementById('g-reveal').style.display='block';
+    document.getElementById('g-reveal-qnum').textContent=`${gs.currentQuestion}번 문제 정답`;
+    document.getElementById('g-reveal-answer').textContent=`정답: ${gs.revealAnswer}`;
+    const nowElim=(gs.eliminated||[]).includes(u.uid);
+    document.getElementById('g-reveal-ok').style.display=(!nowElim&&!isSpec)?'block':'none';
+    document.getElementById('g-reveal-fail').style.display=(nowElim&&!isSpec)?'block':'none';
+    return;
+  }
+  if(gs.phase==='playing'){
+    if(isElim||isSpec){ showSpectate(gs); updateLeaveDetection(false); return; }
+    showPlaying(gs);
+    updateLeaveDetection(true); // 참가자이고 생존 중 → 이탈 감지 활성
+    return;
+  }
+  updateLeaveDetection(false);
+}
+
+// ── 이탈 감지 시스템 (참가자 전용) ────────────────
+function updateLeaveDetection(active){
+  APP.leaveDetectionActive=!!active;
+  if(!active){
+    // 모달이 떠있으면 닫기
+    document.getElementById('leave-warn').style.display='none';
+  }
+}
+
+// 페이지 가시성 변경 (다른 탭/앱으로 전환)
+document.addEventListener('visibilitychange',()=>{
+  if(!APP.leaveDetectionActive) return;
+  if(document.visibilityState==='hidden'){
+    APP.leaveCount=(APP.leaveCount||0)+1;
+    showLeaveWarning();
+  }
+});
+// 윈도우 포커스 잃음 (다른 창으로 전환)
+window.addEventListener('blur',()=>{
+  if(!APP.leaveDetectionActive) return;
+  // visibilitychange와 중복 카운트 방지를 위해 300ms 안에 둘 다 발생하면 한 번만
+  if(APP.lastLeaveAt&&Date.now()-APP.lastLeaveAt<500) return;
+  APP.lastLeaveAt=Date.now();
+  // visibility는 이미 처리될 수 있으니, 추가 카운트는 하지 않고 경고만
+  if(document.visibilityState==='visible'){
+    APP.leaveCount=(APP.leaveCount||0)+1;
+    showLeaveWarning();
+  }
+});
+// 페이지 이탈 시도 시 브라우저 기본 경고
+window.addEventListener('beforeunload',(e)=>{
+  if(!APP.leaveDetectionActive) return;
+  e.preventDefault();
+  e.returnValue='골든벨이 진행 중입니다. 정말 나가시겠습니까?';
+  return e.returnValue;
+});
+
+async function showLeaveWarning(){
+  APP.lastLeaveAt=Date.now();
+  // 진행 화면 상단 뱃지 업데이트
+  const badge=document.getElementById('g-leave-badge');
+  const cnt=document.getElementById('g-leave-cnt');
+  if(badge&&cnt){
+    cnt.textContent=APP.leaveCount;
+    badge.style.display='inline-flex';
+  }
+  // DB에 이탈 횟수 기록 (관리자 화면에 실시간 표시)
+  try { if(APP.user?.uid) await DB.updateUser(APP.user.uid,{leaveCount:APP.leaveCount}); } catch(e){}
+  // 2회 누적 시 강제 탈락 처리
+  if(APP.leaveCount>=2){
+    await forceEliminateForLeave();
+    return;
+  }
+  // 1회 경고 모달
+  document.getElementById('leave-count').textContent=APP.leaveCount;
+  document.getElementById('leave-warn-title').textContent='⚠️ 화면 이탈 감지!';
+  document.getElementById('leave-warn-desc').innerHTML='골든벨 진행 중에는 <strong style="color:var(--gold)">이 화면을 벗어나면 안 됩니다</strong><br><span style="color:#FF7B6B;font-size:.86rem;font-weight:700">⚠ 다음 이탈 시 자동 탈락됩니다!</span>';
+  document.getElementById('btn-leave-ack').style.display='block';
+  document.getElementById('btn-leave-ack').textContent='⬅ 게임으로 돌아가기';
+  document.getElementById('leave-warn').style.display='flex';
+}
+
+// 이탈 2회 누적 시 강제 탈락
+async function forceEliminateForLeave(){
+  // 감지 비활성화 (중복 호출 방지)
+  APP.leaveDetectionActive=false;
+  try {
+    const gs=APP.gs||{};
+    const newElim=[...new Set([...(gs.eliminated||[]),APP.user.uid])];
+    await DB.updateUser(APP.user.uid,{status:'eliminated',leaveCount:APP.leaveCount});
+    await DB.setGS({eliminated:newElim});
+  } catch(e){ console.error('강제 탈락 처리 오류',e); }
+  // 탈락 안내 모달
+  document.getElementById('leave-count').textContent=APP.leaveCount;
+  document.getElementById('leave-warn-title').textContent='❌ 부정행위 탈락';
+  document.getElementById('leave-warn-desc').innerHTML='<strong style="color:var(--red);font-size:1.05rem">화면 이탈 2회 누적으로 탈락 처리되었습니다.</strong><br><span style="font-size:.84rem">앞으로는 관람자로만 참여할 수 있습니다</span>';
+  document.getElementById('btn-leave-ack').textContent='확인';
+  document.getElementById('leave-warn').style.display='flex';
+}
+document.getElementById('btn-leave-ack').addEventListener('click',()=>{
+  document.getElementById('leave-warn').style.display='none';
+});
+
+function showRules(){
+  document.getElementById('g-rules').style.display='block';
+  let t=10;
+  document.getElementById('rules-timer').textContent=t;
+  if(APP.rulesTimer) clearInterval(APP.rulesTimer);
+  APP.rulesTimer=setInterval(()=>{ t--; document.getElementById('rules-timer').textContent=Math.max(0,t); if(t<=0) clearInterval(APP.rulesTimer); },1000);
+}
+
+function showPlaying(gs){
+  document.getElementById('g-playing').style.display='block';
+  const qn=gs.currentQuestion;
+  document.getElementById('g-progress').textContent=`${qn}/30`;
+  document.getElementById('g-bar').style.width=`${(qn/30)*100}%`;
+  APP.myOx=null;
+  document.getElementById('g-answer-section').style.display='block';
+  document.getElementById('g-submitted').style.display='none';
+  document.getElementById('g-hint-box').style.display='none';
+  document.getElementById('g-short-input').value='';
+  document.getElementById('ox-o').classList.remove('sel');
+  document.getElementById('ox-x').classList.remove('sel');
+  // 답안 그리드
+  const grid=document.getElementById('g-grid');
+  grid.innerHTML='';
+  for(let i=1;i<=30;i++){
+    const c=document.createElement('div');
+    c.className='acell'+(i===qn?' current':i<qn?' answered':'');
+    c.textContent=i; grid.appendChild(c);
+  }
+  // 문제 로드
+  DB.getQ(qn).then(q=>{
+    if(!q){
+      document.getElementById('g-qnum').textContent=`${qn}번 문제`;
+      document.getElementById('g-qtext').textContent='(문제가 준비되지 않았습니다)';
+      document.getElementById('g-ox').style.display='none';
+      document.getElementById('g-short').style.display='block';
+      return;
+    }
+    document.getElementById('g-qnum').textContent=`${qn}번 문제 (${q.type==='ox'?'O/X':'단답형'})`;
+    document.getElementById('g-qtext').textContent=q.text;
+    document.getElementById('g-ox').style.display=q.type==='ox'?'block':'none';
+    document.getElementById('g-short').style.display=q.type==='short'?'block':'none';
+  });
+  // 힌트 리스너
+  if(APP.unsubHint){ APP.unsubHint(); }
+  APP.unsubHint=DB.listenHint(APP.user.uid,h=>{
+    if(h&&h.qn===qn){
+      document.getElementById('g-hint-box').style.display='block';
+      document.getElementById('g-hint-text').textContent=h.hint;
+    }
+  });
+}
+
+function showSpectate(gs){
+  document.getElementById('g-spectate').style.display='block';
+  const u=APP.user;
+  const isElim=(gs.eliminated||[]).includes(u.uid);
+  document.getElementById('g-spec-label').textContent=isElim?'❌ 탈락 후 관람 중':'👀 관람 중';
+  document.getElementById('g-spec-msg').textContent=isElim?'응원해주세요! 패자부활전 기회가 있습니다 🙏':'참가자에게 힌트를 전달해서 도와주세요 💡';
+  const qn=gs.currentQuestion;
+  document.getElementById('g-spec-qnum').textContent=`${qn}번 문제`;
+  DB.getQ(qn).then(q=>{ document.getElementById('g-spec-qtext').textContent=q?q.text:'(문제가 없습니다)'; });
+  const hintSec=document.getElementById('g-spec-hint');
+  if(u.roomRole==='spectator'&&gs.phase==='playing'){
+    hintSec.style.display='block';
+    const sel=document.getElementById('g-hint-target');
+    sel.innerHTML='<option value="">대상 선택</option>';
+    (gs.participants||[]).filter(p=>!(gs.eliminated||[]).includes(p.uid)).forEach(p=>{
+      sel.innerHTML+=`<option value="${p.uid}">${p.name} (${p.studentId})</option>`;
+    });
+    document.getElementById('g-hint-sent').style.display='none';
+  } else { hintSec.style.display='none'; }
+}
+
+// OX 버튼
+document.getElementById('ox-o').addEventListener('click',function(){
+  APP.myOx='O';
+  this.classList.add('sel');
+  document.getElementById('ox-x').classList.remove('sel');
+});
+document.getElementById('ox-x').addEventListener('click',function(){
+  APP.myOx='X';
+  this.classList.add('sel');
+  document.getElementById('ox-o').classList.remove('sel');
+});
+
+// 답안 제출
+document.getElementById('btn-submit').addEventListener('click',submitAnswer);
+document.getElementById('g-short-input').addEventListener('keydown',e=>{ if(e.key==='Enter') submitAnswer(); });
+async function submitAnswer(){
+  const gs=APP.gs;
+  if(!gs||gs.phase!=='playing') return;
+  const qn=gs.currentQuestion;
+  const isOx=document.getElementById('g-ox').style.display!=='none';
+  const answer=isOx?APP.myOx:document.getElementById('g-short-input').value.trim();
+  if(!answer) return;
+  try {
+    await DB.submitAns(APP.user.uid,qn,answer);
+    document.getElementById('g-answer-section').style.display='none';
+    document.getElementById('g-submitted').style.display='block';
+    document.getElementById('g-my-answer').textContent=answer;
+  } catch(e){ alert('제출 오류: '+e.message); }
+}
+
+// 패자부활전 신청
+document.getElementById('btn-apply-revival').addEventListener('click', async function(){
+  try {
+    await DB.applyRevival(APP.user.uid);
+    this.style.display='none';
+    document.getElementById('g-revival-applied').style.display='block';
+  } catch(e){ alert('오류: '+e.message); }
+});
+
+// 관람자 힌트 전달
+document.getElementById('btn-send-hint-spec').addEventListener('click', async function(){
+  const target=document.getElementById('g-hint-target').value;
+  const hint=document.getElementById('g-hint-input').value.trim();
+  if(!target){ alert('힌트를 전달할 참가자를 선택하세요'); return; }
+  if(!hint){ alert('힌트 내용을 입력하세요'); return; }
+  try {
+    await DB.sendHint(target,hint,APP.gs?.currentQuestion);
+    document.getElementById('g-hint-sent').style.display='block';
+    document.getElementById('g-hint-input').value='';
+    setTimeout(()=>{ document.getElementById('g-hint-sent').style.display='none'; },2500);
+  } catch(e){ alert('오류: '+e.message); }
+});
+
+// ── 관리자 리스너 ─────────────────────────────────
+function startAdminListeners(){
+  DB.listenUsers(users=>{ APP.users=users; updateStats(); renderAliveElim(); renderUsersTable(); });
+  DB.listenAdmins(admins=>{ APP.admins=admins; renderAdminsTable(); });
+  DB.listenGS(gs=>{ APP.gs=gs; updateStats(); updateCtrl(gs); renderAliveElim(); });
+}
+
+function updateStats(){
+  const gs=APP.gs;
+  const pts=APP.users.filter(u=>u.roomRole==='participant');
+  const elim=gs?.eliminated||[];
+  document.getElementById('s-total').textContent=pts.length;
+  document.getElementById('s-alive').textContent=pts.filter(u=>!elim.includes(u.id)).length;
+  document.getElementById('s-elim').textContent=pts.filter(u=>elim.includes(u.id)).length;
+  document.getElementById('s-phase').textContent=gs?.phase||'waiting';
+  document.getElementById('s-qnum').textContent=`${gs?.currentQuestion||0}/30`;
+}
+
+function updateCtrl(gs){
+  const phase=gs?.phase||'waiting';
+  ['c-waiting','c-rules','c-playing','c-reveal','c-intermission','c-revival','c-end'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+  const el=document.getElementById('c-'+phase);
+  if(el) el.style.display='block';
+  else document.getElementById('c-waiting').style.display='block';
+
+  // 강제 종료 버튼: waiting/end가 아닐 때만 표시
+  const fe=document.getElementById('btn-force-end');
+  if(fe) fe.style.display=(phase!=='waiting'&&phase!=='end')?'inline-block':'none';
+
+  if(phase==='playing'){
+    const qn=gs.currentQuestion;
+    const q=APP.questions[qn-1];
+    document.getElementById('c-playing-info').innerHTML=
+      `<p style="color:var(--gold);font-weight:700">${qn}번 문제 진행 중</p>`+
+      `<p style="font-size:.82rem;color:var(--text2);margin-top:4px">${q?.text?.substring(0,60)||'(문제 없음)'}</p>`+
+      `<p style="font-size:.79rem;color:var(--text2);margin-top:3px">정답: <strong style="color:var(--gold)">${q?.answer||'—'}</strong></p>`;
+    if(APP.unsubAnswers){ APP.unsubAnswers(); }
+    APP.unsubAnswers=DB.listenAns(qn,ans=>{ APP.answers=ans; renderResults(); updateRevealStats(gs,ans); });
+  }
+  if(phase==='reveal'){
+    document.getElementById('c-reveal-ans').textContent=gs.revealAnswer;
+    updateRevealStats(gs,APP.answers);
+  }
+  if(phase==='revival'){
+    document.getElementById('c-revival-title').textContent=`🔄 패자부활전 (${gs.revivalRound}차)`;
+    if(APP.unsubRevival){ APP.unsubRevival(); }
+    APP.unsubRevival=DB.listenRevival(list=>{
+      const el=document.getElementById('c-revival-list');
+      el.innerHTML='';
+      if(!list.length){ el.innerHTML='<p style="color:var(--text2);font-size:.84rem;margin-bottom:8px">신청자 없음</p>'; return; }
+      list.forEach(r=>{
+        const u=APP.users.find(u=>u.id===r.uid);
+        const div=document.createElement('div');
+        div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg3);border-radius:7px;margin-bottom:5px;font-size:.86rem';
+        div.innerHTML=`<span>${u?.name||r.uid} <span style="color:var(--text2);font-size:.76rem">(${u?.studentId})</span></span>`;
+        const btn=document.createElement('button');
+        btn.className='btn btn-green btn-sm'; btn.textContent='부활 선정';
+        btn.addEventListener('click',()=>adminRevive(r.uid));
+        div.appendChild(btn); el.appendChild(div);
+      });
+    });
+  }
+  if(phase==='end'){
+    const pts=APP.users.filter(u=>u.roomRole==='participant');
+    const alive=pts.filter(u=>!(gs.eliminated||[]).includes(u.id));
+    document.getElementById('c-end-survivors').textContent=`최종 생존: ${alive.length}명`;
+  }
+}
+
+function updateRevealStats(gs,ans){
+  if(!gs||gs.phase!=='reveal') return;
+  const q=APP.questions[(gs.currentQuestion||1)-1];
+  const okCnt=ans.filter(a=>norm(a.answer)===norm(q?.answer)).length;
+  const failCnt=ans.filter(a=>norm(a.answer)!==norm(q?.answer)).length;
+  const pts=APP.users.filter(u=>u.roomRole==='participant');
+  document.getElementById('c-reveal-stats').innerHTML=
+    `<div class="stat-box"><div class="num" style="color:var(--green)">${okCnt}</div><div class="lbl">정답</div></div>`+
+    `<div class="stat-box"><div class="num" style="color:var(--red)">${failCnt}</div><div class="lbl">오답</div></div>`+
+    `<div class="stat-box"><div class="num">${pts.length-ans.length}</div><div class="lbl">미제출</div></div>`;
+}
+
+function renderAliveElim(){
+  const gs=APP.gs;
+  const pts=APP.users.filter(u=>u.roomRole==='participant');
+  const elim=gs?.eliminated||[];
+  const alive=pts.filter(u=>!elim.includes(u.id));
+  const elimUsers=pts.filter(u=>elim.includes(u.id));
+  document.getElementById('alive-list').innerHTML=alive.map(u=>{
+    const lc=u.leaveCount||0;
+    const warn=lc>0?`<span style="color:#FF7B6B;font-size:.72rem;font-weight:700" title="이탈 ${lc}회">⚠${lc}</span>`:'';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 7px;background:rgba(39,174,96,.07);border-radius:5px;margin-bottom:3px;font-size:.78rem"><span>${u.name} ${warn}</span><span style="color:var(--text2)">${u.studentId}</span></div>`;
+  }).join('');
+  document.getElementById('elim-list').innerHTML=elimUsers.map(u=>{
+    const lc=u.leaveCount||0;
+    const warn=lc>=2?`<span style="color:#FF7B6B;font-size:.7rem;font-weight:700" title="이탈 ${lc}회 - 부정행위 탈락">⚠${lc}</span>`:'';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 7px;background:rgba(192,57,43,.07);border-radius:5px;margin-bottom:3px;font-size:.78rem"><span style="color:var(--text2)">${u.name} ${warn}</span><span style="color:var(--text2)">${u.studentId}</span></div>`;
+  }).join('');
+}
+
+// 관리자 탭 전환
+document.querySelectorAll('[data-atab]').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('[data-atab]').forEach(b=>b.classList.remove('active'));
+    this.classList.add('active');
+    document.querySelectorAll('.atab').forEach(t=>t.style.display='none');
+    document.getElementById('at-'+this.dataset.atab).style.display='block';
+    const t=this.dataset.atab;
+    if(t==='questions') renderQList();
+    if(t==='users') renderUsersTable();
+    if(t==='admins'){ renderAdminsTable(); loadAdminKey(); }
+    if(t==='results') renderResults();
+  });
+});
+
+const BLANK={phase:'waiting',currentQuestion:0,eliminated:[],revived:[],participants:[],revealAnswer:'',hintOpen:false,revivalRound:0,forceEnded:false,forceEndedAt:0};
+
+// 게임 시작
+document.getElementById('btn-start-game').addEventListener('click', async function(){
+  const pw=document.getElementById('c-pw').value.trim();
+  const err=document.getElementById('c-pw-err');
+  // 최신 오픈키 동기화
+  try { const rpw=await DB.getRoomPw(); if(rpw) APP.ROOM_PW=rpw; } catch(e){}
+  if(pw!==APP.ROOM_PW) return err.textContent='입장 암호가 틀렸습니다';
+  err.textContent='';
+  try {
+    const pts=APP.users.filter(u=>u.roomRole==='participant').map(u=>({uid:u.id,name:u.name,studentId:u.studentId,grade:u.grade,classNum:u.classNum}));
+    // 모든 참가자의 이탈 카운트 초기화
+    await Promise.all(APP.users.filter(u=>u.role==='user').map(u=>DB.updateUser(u.id,{leaveCount:0}).catch(()=>{})));
+    await DB.setGS({...BLANK,phase:'rules',currentQuestion:1,participants:pts,forceEnded:false,forceEndedAt:0});
+  } catch(e){ alert('오류: '+e.message); }
+});
+
+document.getElementById('btn-skip-rules').addEventListener('click',()=>DB.setGS({phase:'playing',currentQuestion:1,hintOpen:false}));
+
+// 정답 공개
+document.getElementById('btn-reveal').addEventListener('click', async function(){
+  const gs=APP.gs;
+  const q=APP.questions[(gs.currentQuestion||1)-1];
+  if(!q?.answer) return alert('정답을 먼저 입력·저장하세요!');
+  try {
+    const ans=await DB.getAns(gs.currentQuestion);
+    const okUids=ans.filter(a=>norm(a.answer)===norm(q.answer)).map(a=>a.uid);
+    const pts=APP.users.filter(u=>u.roomRole==='participant');
+    const failUids=pts.map(u=>u.id).filter(id=>!okUids.includes(id)&&!(gs.eliminated||[]).includes(id));
+    const newElim=[...new Set([...(gs.eliminated||[]),...failUids])];
+    await Promise.all(failUids.map(uid=>DB.updateUser(uid,{status:'eliminated'})));
+    await DB.setGS({phase:'reveal',revealAnswer:q.answer,eliminated:newElim});
+  } catch(e){ alert('오류: '+e.message); }
+});
+
+// 다음 문제
+document.getElementById('btn-next').addEventListener('click', async function(){
+  const cur=APP.gs?.currentQuestion||1;
+  const next=cur+1;
+  try {
+    if(next>30){ await DB.setGS({phase:'end'}); return; }
+    if(cur===15){ await DB.setGS({phase:'intermission'}); return; }
+    if(cur===10){ await DB.setGS({phase:'revival',revivalRound:1,currentQuestion:cur}); await DB.clearRevival(); return; }
+    if(cur===20){ await DB.setGS({phase:'revival',revivalRound:2,currentQuestion:cur}); await DB.clearRevival(); return; }
+    await DB.setGS({phase:'playing',currentQuestion:next,hintOpen:false});
+  } catch(e){ alert('오류: '+e.message); }
+});
+
+document.getElementById('btn-end-intermission').addEventListener('click',()=>DB.setGS({phase:'playing',currentQuestion:16,hintOpen:false}));
+document.getElementById('btn-end-revival').addEventListener('click', async function(){
+  const cur=APP.gs?.currentQuestion||0;
+  await DB.setGS({phase:'playing',currentQuestion:cur+1,hintOpen:false});
+  await DB.clearRevival();
+});
+document.getElementById('btn-reset').addEventListener('click', async function(){
+  if(!confirm('게임을 초기화하시겠습니까?')) return;
+  await DB.setGS(BLANK);
+});
+
+// 강제 종료: 진행자/총관리자가 게임을 즉시 중단, 모든 학생을 입장 화면으로 되돌림
+document.getElementById('btn-force-end').addEventListener('click', async function(){
+  if(!confirm('⚠️ 게임을 강제 종료하시겠습니까?\n\n• 진행 중인 게임이 즉시 중단됩니다\n• 모든 학생이 입장 암호 화면으로 돌아갑니다\n• 답안/힌트/부활신청 기록이 초기화됩니다')) return;
+  try {
+    // 1) 모든 학생의 입장 상태 해제 + 이탈 카운트 초기화
+    const allUsers=await DB.getAllUsers();
+    const studentUsers=allUsers.filter(u=>u.role==='user'&&(u.roomRole||u.leaveCount));
+    await Promise.all(studentUsers.map(u=>DB.updateUser(u.id,{roomRole:firebase.firestore.FieldValue.delete(),status:'alive',leaveCount:0})));
+    // 2) 답안/힌트/부활신청 초기화
+    await DB.clearRevival();
+    const ansSnap=await db.collection('answers').get();
+    await Promise.all(ansSnap.docs.map(d=>d.ref.delete()));
+    const hintSnap=await db.collection('hints').get();
+    await Promise.all(hintSnap.docs.map(d=>d.ref.delete()));
+    // 3) 게임 상태에 forceEnded 플래그 설정 → 접속 중인 학생이 감지해 입장 화면으로 복귀
+    await DB.setGS({...BLANK,forceEnded:true,forceEndedAt:Date.now()});
+    // 4) 1.5초 후 플래그 제거 (신규 로그인자가 영향받지 않도록)
+    setTimeout(async()=>{ try { await DB.setGS({...BLANK,forceEnded:false,forceEndedAt:0}); } catch(e){} },1500);
+    alert('✅ 게임이 강제 종료되었습니다.\n접속 중인 학생들이 입장 화면으로 돌아갑니다.');
+  } catch(e){ alert('오류: '+e.message); }
+});
+
+async function adminRevive(uid){
+  try {
+    const gs=APP.gs;
+    const newRevived=[...new Set([...(gs.revived||[]),uid])];
+    const newElim=(gs.eliminated||[]).filter(e=>e!==uid);
+    await DB.updateUser(uid,{status:'alive'});
+    await DB.setGS({revived:newRevived,eliminated:newElim});
+  } catch(e){ alert('오류: '+e.message); }
+}
+
+// ── 문제 관리 ─────────────────────────────────────
+async function renderQList(){
+  try {
+    const qs=await DB.getAllQ();
+    if(qs.length>0) qs.forEach(q=>{ if(q.id>=1&&q.id<=30) APP.questions[q.id-1]=q; });
+  } catch(e){}
+  const el=document.getElementById('q-list');
+  el.innerHTML='';
+  APP.questions.forEach((q,idx)=>{
+    const div=document.createElement('div');
+    div.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px';
+    div.innerHTML=
+      `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">`+
+      `<span style="font-family:'Black Han Sans',sans-serif;color:var(--gold)">${q.id}번</span>`+
+      `<div style="display:flex;gap:6px;align-items:center">`+
+      `<select id="qt-${idx}" style="width:auto;padding:5px 8px;font-size:.79rem">`+
+      `<option value="short"${q.type==='short'?' selected':''}>단답형</option>`+
+      `<option value="ox"${q.type==='ox'?' selected':''}>O/X</option></select>`+
+      `<button class="btn btn-outline btn-sm" data-qidx="${idx}">저장</button></div></div>`+
+      `<div style="display:grid;grid-template-columns:1fr 110px;gap:7px">`+
+      `<input id="qt-t-${idx}" type="text" value="${q.text||''}" placeholder="${q.id}번 문제 입력">`+
+      `<input id="qt-a-${idx}" type="text" value="${q.answer||''}" placeholder="${q.type==='ox'?'O 또는 X':'정답'}" style="border-color:rgba(255,215,0,.3);color:var(--gold)"></div>`;
+    div.querySelector('[data-qidx]').addEventListener('click',()=>saveQ(idx));
+    el.appendChild(div);
+  });
+}
+async function saveQ(idx){
+  const text=document.getElementById(`qt-t-${idx}`).value.trim();
+  const answer=document.getElementById(`qt-a-${idx}`).value.trim();
+  const type=document.getElementById(`qt-${idx}`).value;
+  APP.questions[idx]={...APP.questions[idx],text,answer,type};
+  try { await DB.setQ(APP.questions[idx].id,{text,answer,type}); alert(`${APP.questions[idx].id}번 저장!`); }
+  catch(e){ alert('저장 오류: '+e.message); }
+}
+document.getElementById('btn-save-all-q').addEventListener('click', async function(){
+  let saved=0;
+  for(let i=0;i<30;i++){
+    const te=document.getElementById(`qt-t-${i}`);
+    if(!te) continue;
+    const text=te.value.trim();
+    const answer=document.getElementById(`qt-a-${i}`).value.trim();
+    const type=document.getElementById(`qt-${i}`).value;
+    APP.questions[i]={...APP.questions[i],text,answer,type};
+    if(text){ try{ await DB.setQ(APP.questions[i].id,{text,answer,type}); saved++; }catch(e){} }
+  }
+  alert(`${saved}개 문제 저장 완료!`);
+});
+
+// ── 결과 현황 ─────────────────────────────────────
+function renderResults(){
+  const gs=APP.gs;
+  const qn=gs?.currentQuestion||0;
+  document.getElementById('results-title').textContent=`📊 ${qn}번 문제 답안 현황`;
+  const ans=APP.answers;
+  const q=APP.questions[qn-1];
+  // 좌석 배치도 (항상 렌더)
+  renderAdminSeatGrid();
+  if(!ans.length){ document.getElementById('results-table').innerHTML='<p style="color:var(--text2)">제출된 답안이 없습니다</p>'; document.getElementById('results-missing').innerHTML=''; return; }
+  const rows=ans.map(a=>{
+    const u=APP.users.find(u=>u.id===a.uid);
+    const ok=norm(a.answer)===norm(q?.answer);
+    return `<tr><td>${u?.name||a.uid}</td><td style="color:var(--text2)">${u?.studentId||'—'}</td><td><strong style="color:var(--gold)">${a.answer}</strong></td><td><span class="badge ${ok?'badge-green':'badge-red'}">${ok?'정답':'오답'}</span></td></tr>`;
+  }).join('');
+  document.getElementById('results-table').innerHTML=`<div style="overflow-x:auto"><table><thead><tr><th>이름</th><th>학번</th><th>제출 답안</th><th>정오</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  const pts=APP.users.filter(u=>u.roomRole==='participant');
+  document.getElementById('results-missing').innerHTML=pts.filter(p=>!ans.find(a=>a.uid===p.id)).map(u=>
+    `<div style="display:flex;justify-content:space-between;padding:6px 9px;background:rgba(192,57,43,.07);border-radius:6px;margin-bottom:3px;font-size:.83rem"><span>${u.name}</span><span style="color:var(--text2)">${u.studentId}</span></div>`
+  ).join('');
+}
+
+// ── 관리자 좌석 배치도 ────────────────────────────
+let ADMIN_SEAT_VIEW='current'; // 'current' = 이번 문제 정답/오답, 'overall' = 전체 생존/탈락
+function renderAdminSeatGrid(){
+  const grid=document.getElementById('admin-seat-grid');
+  if(!grid) return;
+  grid.innerHTML='';
+  const stage=document.createElement('div');
+  stage.className='seat-stage';
+  stage.textContent='🎤 무대 (정면)';
+  grid.appendChild(stage);
+  const gs=APP.gs;
+  const qn=gs?.currentQuestion||0;
+  const q=APP.questions[qn-1];
+  const ans=APP.answers||[];
+  const elim=new Set(gs?.eliminated||[]);
+  // seat → user 매핑
+  const seatToUser={};
+  APP.users.forEach(u=>{ if(u.role==='user'&&u.seat!=null) seatToUser[u.seat]=u; });
+  for(let i=0;i<SEAT_COLS*SEAT_ROWS;i++){
+    const u=seatToUser[i];
+    const cell=document.createElement('div');
+    cell.className='seat';
+    if(!u){
+      cell.classList.add('empty');
+      cell.textContent='';
+      cell.title=seatLabel(i)+' (빈 자리)';
+    } else {
+      cell.textContent=u.name?.substring(0,2)||'';
+      let stateLabel='';
+      if(ADMIN_SEAT_VIEW==='current'&&qn>0){
+        const a=ans.find(x=>x.uid===u.id);
+        if(a){
+          const ok=norm(a.answer)===norm(q?.answer||'');
+          cell.classList.add(ok?'correct':'wrong');
+          stateLabel=ok?'정답':'오답('+a.answer+')';
+        } else if(u.roomRole==='participant'&&!elim.has(u.id)){
+          // 미제출
+          cell.style.background='rgba(160,160,160,.15)';
+          cell.style.borderColor='var(--border)';
+          stateLabel='미제출';
+        } else if(elim.has(u.id)){
+          cell.classList.add('eliminated');
+          stateLabel='탈락(이전)';
+        } else if(u.roomRole==='spectator'){
+          cell.style.background='rgba(79,195,247,.12)';
+          cell.style.borderColor='#4FC3F7';
+          stateLabel='관람자';
+        } else {
+          cell.style.background='rgba(160,160,160,.1)';
+          stateLabel='미입장';
+        }
+      } else {
+        // overall view
+        if(u.roomRole==='spectator'){
+          cell.style.background='rgba(79,195,247,.12)';
+          cell.style.borderColor='#4FC3F7';
+          stateLabel='관람자';
+        } else if(!u.roomRole){
+          cell.style.background='rgba(160,160,160,.1)';
+          stateLabel='미입장';
+        } else if(elim.has(u.id)){
+          cell.classList.add('eliminated');
+          stateLabel='탈락';
+        } else {
+          cell.classList.add('alive');
+          stateLabel='생존';
+        }
+      }
+      cell.title=`${seatLabel(i)} | ${u.name} (${u.studentId}) | ${stateLabel}`;
+    }
+    grid.appendChild(cell);
+  }
+  // 범례
+  const legend=document.getElementById('admin-seat-legend');
+  if(ADMIN_SEAT_VIEW==='current'){
+    legend.innerHTML=
+      '<span><i style="background:rgba(39,174,96,.35);border:1.5px solid var(--green)"></i>정답</span>'+
+      '<span><i style="background:rgba(192,57,43,.35);border:1.5px solid var(--red)"></i>오답</span>'+
+      '<span><i style="background:rgba(192,57,43,.5);border:1.5px solid var(--red);opacity:.7"></i>이전 탈락</span>'+
+      '<span><i style="background:rgba(160,160,160,.15)"></i>미제출</span>'+
+      '<span><i style="background:rgba(79,195,247,.12);border:1.5px solid #4FC3F7"></i>관람자</span>';
+  } else {
+    legend.innerHTML=
+      '<span><i style="background:rgba(39,174,96,.25);border:1.5px solid var(--green)"></i>생존</span>'+
+      '<span><i style="background:rgba(192,57,43,.5);border:1.5px solid var(--red)"></i>탈락</span>'+
+      '<span><i style="background:rgba(79,195,247,.12);border:1.5px solid #4FC3F7"></i>관람자</span>'+
+      '<span><i style="background:rgba(160,160,160,.1)"></i>미입장</span>';
+  }
+}
+
+// 좌석 뷰 토글 버튼
+document.querySelectorAll('[data-seat-view]').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    ADMIN_SEAT_VIEW=this.dataset.seatView;
+    document.querySelectorAll('[data-seat-view]').forEach(b=>{
+      b.classList.remove('btn-gold'); b.classList.add('btn-outline');
+    });
+    this.classList.remove('btn-outline'); this.classList.add('btn-gold');
+    renderAdminSeatGrid();
+  });
+});
+
+// ── 학생 관리 ─────────────────────────────────────
+function renderUsersTable(){
+  const gf=document.getElementById('f-grade')?.value||'all';
+  const cf=document.getElementById('f-class')?.value||'all';
+  const filtered=APP.users.filter(u=>u.role==='user'&&(gf==='all'||u.grade===Number(gf))&&(cf==='all'||u.classNum===Number(cf)));
+  filtered.sort((a,b)=>a.grade-b.grade||a.classNum-b.classNum||(a.number||0)-(b.number||0));
+  document.getElementById('users-count').textContent=`${filtered.length}명`;
+  const gs=APP.gs;
+  document.getElementById('users-tbody').innerHTML=filtered.map(u=>{
+    const isElim=(gs?.eliminated||[]).includes(u.id);
+    const rl=u.roomRole==='participant'?'참가자':u.roomRole==='spectator'?'관람자':'미입장';
+    const rb=u.roomRole==='participant'?'badge-gold':'badge-gray';
+    const seatTxt=u.seat!=null?seatLabel(Number(u.seat)):'—';
+    const lc=u.leaveCount||0;
+    const lcBadge=lc>=2?`<span class="badge badge-red">⚠ ${lc}회</span>`:lc>=1?`<span class="badge" style="background:rgba(231,76,60,.18);color:#FF7B6B;border:1px solid var(--red)">⚠ ${lc}회</span>`:`<span style="color:var(--text3);font-size:.78rem">0</span>`;
+    return `<tr><td><strong>${u.name}</strong></td><td style="color:var(--text2)">${u.studentId}</td><td style="color:var(--text2)">${u.grade}학년 ${u.classNum}반 ${u.number}번</td><td style="color:var(--text2);font-size:.8rem">${u.id}</td><td style="color:var(--text2);font-size:.8rem">${seatTxt}</td><td><span class="badge ${rb}">${rl}</span></td><td>${lcBadge}</td><td><span class="badge ${isElim?'badge-red':'badge-green'}">${isElim?'탈락':'생존'}</span></td></tr>`;
+  }).join('');
+}
+document.getElementById('f-grade').addEventListener('change',renderUsersTable);
+document.getElementById('f-class').addEventListener('change',renderUsersTable);
+
+// ── 관리자 계정 ───────────────────────────────────
+function renderAdminsTable(){
+  document.getElementById('admins-tbody').innerHTML=APP.admins.map(a=>
+    `<tr><td><strong>${a.name}</strong></td><td style="color:var(--text2);font-size:.81rem">${a.id}</td>`+
+    `<td><span style="color:${APP.ROLE_COLORS[a.adminRole]||'var(--text2)'};font-weight:700;font-size:.81rem">${APP.ROLE_LABELS[a.adminRole]||a.adminRole}</span></td>`+
+    `<td>${a.id!=='hjw1138'?`<button class="btn btn-red btn-sm" data-del="${a.id}">삭제</button>`:''}</td></tr>`
+  ).join('');
+  document.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.addEventListener('click', async function(){
+      if(!confirm(`${this.dataset.del} 계정을 삭제하시겠습니까?`)) return;
+      try { await DB.deleteAdmin(this.dataset.del); } catch(e){ alert('오류: '+e.message); }
+    });
+  });
+}
+async function loadAdminKey(){
+  if(APP.user?.adminRole!=='super') return;
+  const k=await DB.getAdminKey();
+  document.getElementById('admin-key-display').textContent=k||'(없음)';
+  // 골든벨 오픈키도 함께 로드
+  const rpw=await DB.getRoomPw();
+  if(rpw){ APP.ROOM_PW=rpw; }
+  document.getElementById('room-pw-display').textContent=APP.ROOM_PW||'(없음)';
+  // 진행 제어 탭의 현재 오픈키 표시도 동기화
+  const cpw=document.getElementById('c-pw-current');
+  if(cpw) cpw.textContent=APP.ROOM_PW||'(없음)';
+}
+document.getElementById('btn-regen-key').addEventListener('click', async function(){
+  if(APP.user?.adminRole!=='super') return alert('총관리자만 가능합니다');
+  const newKey='GBKEY_'+Math.random().toString(36).substring(2,10).toUpperCase();
+  await DB.setAdminKey(newKey);
+  document.getElementById('admin-key-display').textContent=newKey;
+  alert('승인키가 재발급되었습니다: '+newKey);
+});
+// 골든벨 오픈키 변경
+document.getElementById('btn-change-room-pw').addEventListener('click', async function(){
+  if(APP.user?.adminRole!=='super'&&APP.user?.adminRole!=='host') return alert('총관리자 또는 진행자만 가능합니다');
+  const v=document.getElementById('new-room-pw').value.trim();
+  const msg=document.getElementById('room-pw-msg');
+  msg.style.color='#FF6B6B'; msg.textContent='';
+  if(!v) return msg.textContent='새 오픈키를 입력하세요';
+  if(v.length<4) return msg.textContent='오픈키는 4자 이상이어야 합니다';
+  try {
+    await DB.setRoomPw(v);
+    APP.ROOM_PW=v;
+    document.getElementById('room-pw-display').textContent=v;
+    const cpw=document.getElementById('c-pw-current'); if(cpw) cpw.textContent=v;
+    document.getElementById('new-room-pw').value='';
+    msg.style.color='var(--green)'; msg.textContent='✅ 골든벨 오픈키가 변경되었습니다';
+  } catch(e){ msg.textContent='오류: '+e.message; }
+});
+document.getElementById('btn-regen-room-pw').addEventListener('click', async function(){
+  if(APP.user?.adminRole!=='super'&&APP.user?.adminRole!=='host') return alert('총관리자 또는 진행자만 가능합니다');
+  const newPw='GB'+Math.random().toString(36).substring(2,7).toUpperCase();
+  try {
+    await DB.setRoomPw(newPw);
+    APP.ROOM_PW=newPw;
+    document.getElementById('room-pw-display').textContent=newPw;
+    const cpw=document.getElementById('c-pw-current'); if(cpw) cpw.textContent=newPw;
+    const msg=document.getElementById('room-pw-msg');
+    msg.style.color='var(--green)'; msg.textContent='✅ 새 오픈키 자동 발급: '+newPw;
+  } catch(e){ alert('오류: '+e.message); }
+});
+document.getElementById('btn-create-admin').addEventListener('click', async function(){
+  const id=document.getElementById('na-id').value.trim();
+  const pw=document.getElementById('na-pw').value.trim();
+  const name=document.getElementById('na-name').value.trim();
+  const role=document.getElementById('na-role').value;
+  const msg=document.getElementById('na-msg');
+  msg.style.color='#FF6B6B'; msg.textContent='';
+  if(!id||!pw||!name) return msg.textContent='모든 항목을 입력하세요';
+  if(pw.length<4) return msg.textContent='비밀번호 4자 이상';
+  try {
+    const ex=await DB.getAdmin(id);
+    if(ex) return msg.textContent='이미 존재하는 아이디입니다';
+    await DB.setAdmin(id,{id,password:pw,name,adminRole:role});
+    msg.style.color='var(--green)'; msg.textContent='✅ 관리자 계정이 생성되었습니다';
+    document.getElementById('na-id').value='';
+    document.getElementById('na-pw').value='';
+    document.getElementById('na-name').value='';
+  } catch(e){ msg.textContent='오류: '+e.message; }
+});
+</script>
+</body>
+</html>
