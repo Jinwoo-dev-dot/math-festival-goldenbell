@@ -982,13 +982,23 @@ window.playerLogin=async function(){
   if(acc.pw!==pw){showAlert('player-err','비밀번호 오류');return;}
   const roomSnap=await get(dbRef(`rooms/${room}`));
   if(!roomSnap.exists()){showAlert('player-err','존재하지 않는 코드');return;}
-  if(roomSnap.val().status==='ended'){showAlert('player-err','종료된 게임');return;}
+  const roomStatus=roomSnap.val().status;
+  if(roomStatus==='ended'){showAlert('player-err','이미 종료된 게임이에요. 새 코드를 확인하세요');return;}
   const uid=`${acc.seatRow}_${acc.seatCol}_${acc.name}`;
   currentUser={name:acc.name,studentId:acc.studentId||'',seatRow:acc.seatRow,seatCol:acc.seatCol,id,roomCode:room,uid};
   currentRoom=room;
   const sRef=dbRef(`rooms/${room}/students/${uid}`);
   await set(sRef,{name:acc.name,studentId:acc.studentId||'',seatRow:acc.seatRow,seatCol:acc.seatCol,uid,status:'alive',joinedAt:serverTimestamp()});
   onDisconnect(sRef).remove();
+  // 방 상태가 waiting/notice일 때만 정상 입장
+  const freshSnap=await get(dbRef(`rooms/${room}`));
+  const freshStatus=freshSnap.exists()?freshSnap.val().status:'';
+  if(freshStatus==='ended'){
+    showAlert('player-err','이미 종료된 게임이에요. 새 코드를 확인하세요');
+    // 등록한 student 삭제
+    await remove(dbRef(`rooms/${room}/students/${uid}`));
+    return;
+  }
   listenGameState();
   document.getElementById('wait-name-display').textContent=acc.name;
   document.getElementById('wait-seat-display').textContent=`${acc.seatCol}행 ${acc.seatRow}열`;
@@ -1162,10 +1172,17 @@ async function calcAndShowRankings(){
     localStorage.setItem('goldenbell_room_code',newCode);
     // 새 방 생성 (기존 방은 기록 보존)
     await set(dbRef(`rooms/${newCode}`),{status:'waiting',createdAt:serverTimestamp(),currentRound:0});
+    // 관리자 currentRoom을 새 코드로 전환
+    currentRoom=newCode;
     // 관리자 화면 코드 갱신
     if(isAdmin){
-      document.getElementById('admin-room-code').textContent=`다음코드: ${newCode}`;
+      document.getElementById('admin-room-code').textContent=`코드: ${newCode}`;
       document.getElementById('settings-room-code').textContent=newCode;
+      document.getElementById('startcode-room').textContent=newCode;
+      // 새 방으로 리스너 재등록
+      removeAllListeners();
+      listenAdminData();
+      renderQuestionList();
     }
   }
 };
@@ -1414,7 +1431,10 @@ function listenGameState(){
           // 등수 데이터는 있으나 내 uid가 없는 경우 (관람자 등)
           showPage('page-wait');document.querySelector('#page-wait .wait-title').textContent='게임이 종료되었습니다';
         } else {
-          showPage('page-wait');document.querySelector('#page-wait .wait-title').textContent='게임이 종료되었습니다';
+          // rankings 없이 ended → 대기 화면에서 안내
+          document.querySelector('#page-wait .wait-title').textContent='게임이 종료되었습니다';
+          document.querySelector('#page-wait .wait-msg').textContent='다음 게임 코드를 기다려주세요';
+          showPage('page-wait');
         }
         break;
     }
