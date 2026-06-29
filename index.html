@@ -1178,7 +1178,14 @@ async function autoFinishQuestion(){
 
 window.finishQuestion=async function(){
   clearInterval(timerInterval);
-  if(!currentQ){alert('진행 중인 문제가 없습니다');return;}
+
+  // Firebase에서 현재 문제 직접 읽기 (로컬 currentQ의 answer가 비어있을 수 있음)
+  const roomSnap=await get(dbRef(`rooms/${currentRoom}`));
+  if(!roomSnap.exists()){return;}
+  const roomData=roomSnap.val();
+  const liveQ=roomData.currentQuestion;
+  if(!liveQ){alert('진행 중인 문제가 없습니다');return;}
+  currentQ=liveQ; // 최신 데이터로 갱신
 
   const studSnap=await get(dbRef(`rooms/${currentRoom}/students`));
   if(!studSnap.exists()){
@@ -1186,8 +1193,10 @@ window.finishQuestion=async function(){
   }
 
   const students=studSnap.val();
-  const correctAns=(currentQ.answer||'').toLowerCase().trim();
-  const isRevival=currentQ.isRevival||false;
+  const correctAns=(liveQ.answer||'').toLowerCase().trim();
+  const isRevival=liveQ.isRevival||false;
+  
+  if(!correctAns){alert('정답이 설정되지 않은 문제입니다');return;}
   const updates={};
 
   for(const[uid,s]of Object.entries(students)){
@@ -1223,8 +1232,8 @@ window.finishQuestion=async function(){
   for(const[uid,s]of Object.entries(students)){
     const participating=isRevival?(s.status==='alive'||s.status==='eliminated'):s.status==='alive';
     if(!participating)continue;
-    const myAns=(s.currentAnswer||'').toLowerCase().trim();
-    const correct=myAns&&myAns===correctAns;
+    const myAns2=(s.currentAnswer||'').toLowerCase().trim();
+    const correct=myAns2&&myAns2===correctAns;
     // 패자부활전 정답자는 이전 탈락 기록에서 제거 (등수 초기화)
     if(isRevival&&correct){
       elimOrder=elimOrder.map(group=>Array.isArray(group)?group.filter(u=>u!==uid):group).filter(g=>!Array.isArray(g)||g.length>0);
@@ -1360,25 +1369,29 @@ function listenGameState(){
       case 'playing':
         if(d.currentQuestion){
           if(me?.status==='eliminated'){
-            // 탈락자는 일반 문제 참여 불가 → 탈락 대기 화면
             updateElimWaitSurvivors(d.students||{});
             showPage('page-elim-wait');
           } else {
-            showQuestionPage(d.currentQuestion);
+            // 이미 같은 문제의 question 화면이면 재호출 안 함 (타이머 리셋 방지)
+            const alreadyOnQ=document.getElementById('page-question').classList.contains('active');
+            const sameQ=currentQ&&currentQ.key===d.currentQuestion.key;
+            if(!alreadyOnQ||!sameQ) showQuestionPage(d.currentQuestion);
           }
         }break;
       case 'revival-playing':
         if(d.currentQuestion){
           if(me?.status==='eliminated'){
-            // 탈락자는 패자부활전 참여 가능
-            showRevivalQuestion(d.currentQuestion);
+            const alreadyOnQ=document.getElementById('page-question').classList.contains('active');
+            const sameQ=currentQ&&currentQ.key===d.currentQuestion.key;
+            if(!alreadyOnQ||!sameQ) showRevivalQuestion(d.currentQuestion);
           } else if(me?.status==='alive'){
-            // 생존자는 일반 문제처럼 참여
-            showQuestionPage(d.currentQuestion);
+            const alreadyOnQ=document.getElementById('page-question').classList.contains('active');
+            const sameQ=currentQ&&currentQ.key===d.currentQuestion.key;
+            if(!alreadyOnQ||!sameQ) showQuestionPage(d.currentQuestion);
           }
         }break;
       case 'grading':
-        disableAnswerInput();break;
+        if(document.getElementById('page-question').classList.contains('active'))disableAnswerInput();break;
       case 'result':
         if(me?.status==='alive')showResultPage(d);
         else if(me?.status==='eliminated'){updateElimWaitSurvivors(d.students||{});showPage('page-elim-wait');}
