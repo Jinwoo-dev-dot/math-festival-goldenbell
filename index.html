@@ -1172,7 +1172,8 @@ async function calcAndShowRankings(){
 window.startBreak=async function(){clearInterval(timerInterval);await update(dbRef(`rooms/${currentRoom}`),{status:'break',currentQuestion:null});};
 /* ── 문제 자동/수동 끝내기 ── */
 async function autoFinishQuestion(){
-  // 타이머 종료 시 자동 호출
+  // 타이머 종료 후 1.5초 대기 (마지막 제출이 Firebase에 반영될 시간)
+  await new Promise(r=>setTimeout(r,1500));
   await finishQuestion();
 }
 
@@ -1193,33 +1194,41 @@ window.finishQuestion=async function(){
   }
 
   const students=studSnap.val();
-  const correctAns=(liveQ.answer||'').toLowerCase().trim();
+  // 정답 정규화: 소문자 + 모든 공백 제거
+  const normalize=str=>(str||'').toLowerCase().replace(/\s/g,'');
+  const correctAns=normalize(liveQ.answer);
   const isRevival=liveQ.isRevival||false;
-  
+
   if(!correctAns){alert('정답이 설정되지 않은 문제입니다');return;}
+
+  // Firebase에서 최신 학생 데이터 재조회 (타이밍 문제 방지)
+  const freshStudSnap=await get(dbRef(`rooms/${currentRoom}/students`));
+  const freshStudents=freshStudSnap.exists()?freshStudSnap.val():students;
+
   const updates={};
 
-  for(const[uid,s]of Object.entries(students)){
+  for(const[uid,s]of Object.entries(freshStudents)){
     const participating = isRevival
       ? (s.status==='alive'||s.status==='eliminated')
       : s.status==='alive';
     if(!participating)continue;
 
-    const myAns=(s.currentAnswer||'').toLowerCase().trim();
-    const correct=myAns&&myAns===correctAns;
+    const myAns=normalize(s.currentAnswer);
+    const correct=myAns.length>0&&myAns===correctAns;
+    
+    // 디버그용 로그
+    console.log(`[채점] ${s.name}: 제출="${s.currentAnswer}" → 정규화="${myAns}" / 정답="${correctAns}" → ${correct?'정답':'오답'}`);
 
     if(correct){
-      // 정답자
+      // 정답자 - 상태 변경 없음 (생존 유지)
       if(isRevival&&s.status==='eliminated'){
-        updates[`rooms/${currentRoom}/students/${uid}/status`]='alive'; // 부활!
+        updates[`rooms/${currentRoom}/students/${uid}/status`]='alive'; // 패자부활전 부활
       }
-      // 생존자 정답은 그대로
     } else {
       // 오답 or 미제출 → 탈락
       if(s.status==='alive'){
         updates[`rooms/${currentRoom}/students/${uid}/status`]='eliminated';
       }
-      // 탈락자는 패자부활전 오답도 그대로 탈락 유지
     }
   }
 
@@ -1229,11 +1238,11 @@ window.finishQuestion=async function(){
   if(!Array.isArray(elimOrder))elimOrder=[];
   // 이번 라운드 탈락자 그룹
   const thisRoundElim=[];
-  for(const[uid,s]of Object.entries(students)){
+  for(const[uid,s]of Object.entries(freshStudents)){
     const participating=isRevival?(s.status==='alive'||s.status==='eliminated'):s.status==='alive';
     if(!participating)continue;
-    const myAns2=(s.currentAnswer||'').toLowerCase().trim();
-    const correct=myAns2&&myAns2===correctAns;
+    const myAns2=normalize(s.currentAnswer);
+    const correct=myAns2.length>0&&myAns2===correctAns;
     // 패자부활전 정답자는 이전 탈락 기록에서 제거 (등수 초기화)
     if(isRevival&&correct){
       elimOrder=elimOrder.map(group=>Array.isArray(group)?group.filter(u=>u!==uid):group).filter(g=>!Array.isArray(g)||g.length>0);
